@@ -192,15 +192,15 @@ class Bt(Inst):
     Example:
         TODO: add a test here!
     """
-    def __init__(s, pred, true_dst=None, false_dst=None):
-        s.pred = pred
+    def __init__(s, cond, true_dst=None, false_dst=None):
+        s.cond = cond
         s.true_dst = true_dst
         s.false_dst = false_dst
         super().__init__()
     def definition(s):
         return None
     def uses(s):
-        return [s.pred]
+        return [s.cond]
     def set_true_dst(s, true_dst):
         s.true_dst = true_dst
     def set_false_dst(s, false_dst):
@@ -210,7 +210,7 @@ class Bt(Inst):
         The evaluation of a phi-function sets the next_inst argument in the
         branch.
         """
-        if env.get(s.pred):
+        if env.get(s.cond):
             super().set_next(s.true_dst)
         else:
             super().set_next(s.false_dst)
