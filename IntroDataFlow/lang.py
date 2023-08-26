@@ -223,6 +223,13 @@ match_instruction = {
     "geq": Geq,
     "bt":  Bt
 }
+rev_match_instruction = {
+    Add: "add",
+    Mul: "mul",
+    Lth: "lth",
+    Geq: "geq",
+    Bt:  "bt"
+}
 
 
 def parse_set(line):
@@ -237,7 +244,7 @@ def is_bt(line):
 def parse_binop(line):
     (dst, expr) = line.split(" = ")
     (opcode, var, value) = expr.split(" ")
-    return (dst, opcode, var, value)
+    return (dst, opcode, var, value.strip())
 
 
 def parse_bt(line):
@@ -277,17 +284,21 @@ def chain_instructions(i, lines, program, btStack):
     chain_instructions(i+1, lines, program, btStack)
 
 
-def pretty_print(head):
+def pretty_print(head, bb=0):
     while True:
-        print(type(head))
-        if len(head.NEXTS) == 0:
-            print("end of branch")
-            break
         if type(head) == Bt:
-            pretty_print(head.NEXTS[0])
-            pretty_print(head.NEXTS[1])
+            print(f'bb: {bb}, br {head.cond} {bb+1} {bb+2}\n')
+            pretty_print(head.NEXTS[0], bb+1)
+            pretty_print(head.NEXTS[1], bb+2)
             break
         else:
+            print(f'bb: {bb}, '
+                  f'{head.dst} = '
+                  f'{rev_match_instruction[type(head)]} '
+                  f'{head.src0} {head.src1}')
+            if len(head.NEXTS) == 0:
+                print("")
+                break
             head = head.NEXTS[0]
 
 
@@ -299,7 +310,7 @@ def build_cfg(file_name):
     btStack = deque([(None, -1)])
     chain_instructions(0, lines[1:], program, btStack)
     # Pretty print it!
-    pretty_print(program[0])
+    pretty_print(program[1])
     # call interp(cfg.start, environment, title)
 
 
