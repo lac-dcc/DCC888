@@ -105,14 +105,14 @@ class Inst:
     instruction runs.
     """
     def __init__(s):
-        s.NEXTS = set()
-        s.PREVS = set()
+        s.NEXTS = []
+        s.PREVS = []
         s.IN = set()
         s.OUT = set()
     def add_next(s, next_inst):
-        s.NEXTS.add(next_inst)
+        s.NEXTS.append(next_inst)
     def add_prev(s, prev_inst):
-        s.PREVS.add(prev_inst)
+        s.PREVS.append(prev_inst)
 
 class BinOp(Inst):
     """
