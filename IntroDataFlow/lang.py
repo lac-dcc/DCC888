@@ -215,17 +215,6 @@ class Bt(Inst):
         else:
             super().set_next(s.false_dst)
 
-def parse_set(line):
-    (s, var, value) = line.split(" ")
-    return (var, int(value))
-
-def is_bt(line):
-    return line.split(" ")[0] is "bt"
-
-def parse_binop(line):
-    (dst, expr) = line.split(" =")
-    (opcode, var, value) = expr.split(" ")
-    return (dst, opcode, int(var), int(value))
 
 match_instruction = {
     "add": Add,
@@ -235,31 +224,84 @@ match_instruction = {
     "bt":  Bt
 }
 
-def chain_instructions(i, lines, program, env):
+
+def parse_set(line):
+    (s, var, value) = line.split(" ")
+    return (var, int(value))
+
+
+def is_bt(line):
+    return line.split(" ")[0] == "bt"
+
+
+def parse_binop(line):
+    (dst, expr) = line.split(" = ")
+    (opcode, var, value) = expr.split(" ")
+    return (dst, opcode, var, value)
+
+
+def parse_bt(line):
+    (_, cond, trueIndex, falseIndex) = line.split(" ")
+    return (cond, int(trueIndex), int(falseIndex))
+
+
+def points_to(bt, i):
+    return bt[1] == i
+
+
+def chain_instructions(i, lines, program, btStack):
+    if i >= len(lines):
+        return
     line = lines[i]
 #    if line is "set":
 #        (var, value) = parse_set(line)
 #        env.set(var, value)
     if is_bt(line):
+        (cond, trueIndex, falseIndex) = parse_bt(line)
+        inst = Bt(cond)
+        btStack.appendleft((inst, falseIndex))
+
     else:
         (dst, opcode, src0, src1) = parse_binop(line)
         inst = match_instruction[opcode](dst, src0, src1)
         # tail may be bt, must deal with this case
+    if points_to(btStack[0], i):
+        btStack[0][0].add_next(inst)
+        inst.add_prev(btStack[0])
+        btStack.popleft()
+    else:
         tail = program[-1]
         tail.add_next(inst)
         inst.add_prev(tail)
-        program.append(inst)
-    chain_instructions(i+1, lines, program, env)
+    program.append(inst)
+    chain_instructions(i+1, lines, program, btStack)
+
+
+def pretty_print(head):
+    while True:
+        print(type(head))
+        if len(head.NEXTS) == 0:
+            print("end of branch")
+            break
+        if type(head) == Bt:
+            pretty_print(head.NEXTS[0])
+            pretty_print(head.NEXTS[1])
+            break
+        else:
+            head = head.NEXTS[0]
+
 
 def build_cfg(file_name):
     with open(file_name) as f:
         # TODO: build the CFG here!
         lines = f.readlines()
     program = [Inst()]
-    env = Env()
-    chain_instructions(i, lines, program, env)
-        # Pretty print it!
-        # call interp(cfg.start, environment, title)
+    btStack = deque([(None, -1)])
+    chain_instructions(0, lines[1:], program, btStack)
+    # Pretty print it!
+    pretty_print(program[0])
+    # call interp(cfg.start, environment, title)
+
 
 def interp(instruction, environment, title):
     """
