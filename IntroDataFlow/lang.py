@@ -215,9 +215,49 @@ class Bt(Inst):
         else:
             super().set_next(s.false_dst)
 
+def parse_set(line):
+    (s, var, value) = line.split(" ")
+    return (var, int(value))
+
+def is_bt(line):
+    return line.split(" ")[0] is "bt"
+
+def parse_binop(line):
+    (dst, expr) = line.split(" =")
+    (opcode, var, value) = expr.split(" ")
+    return (dst, opcode, int(var), int(value))
+
+match_instruction = {
+    "add": Add,
+    "mul": Mul,
+    "lth": Lth,
+    "geq": Geq,
+    "bt":  Bt
+}
+
+def chain_instructions(i, lines, program, env):
+    line = lines[i]
+#    if line is "set":
+#        (var, value) = parse_set(line)
+#        env.set(var, value)
+    if is_bt(line):
+    else:
+        (dst, opcode, src0, src1) = parse_binop(line)
+        inst = match_instruction[opcode](dst, src0, src1)
+        # tail may be bt, must deal with this case
+        tail = program[-1]
+        tail.add_next(inst)
+        inst.add_prev(tail)
+        program.append(inst)
+    chain_instructions(i+1, lines, program, env)
+
 def build_cfg(file_name):
     with open(file_name) as f:
         # TODO: build the CFG here!
+        lines = f.readlines()
+    program = [Inst()]
+    env = Env()
+    chain_instructions(i, lines, program, env)
         # Pretty print it!
         # call interp(cfg.start, environment, title)
 
