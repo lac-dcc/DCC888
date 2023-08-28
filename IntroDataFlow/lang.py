@@ -280,6 +280,7 @@ def chain_instructions(i, lines, program, btStack):
         tail = program[-1]
         tail.add_next(inst)
         inst.add_prev(tail)
+    inst.inst_number = i
     program.append(inst)
     chain_instructions(i+1, lines, program, btStack)
 
@@ -287,12 +288,13 @@ def chain_instructions(i, lines, program, btStack):
 def pretty_print(head, bb=0):
     while True:
         if type(head) == Bt:
-            print(f'bb: {bb}, br {head.cond} {bb+1} {bb+2}\n')
+            print(f'{bb} | {head.inst_number} : '
+                  f'br {head.cond} {bb+1} {bb+2}\n')
             pretty_print(head.NEXTS[0], bb+1)
             pretty_print(head.NEXTS[1], bb+2)
             break
         else:
-            print(f'bb: {bb}, '
+            print(f'{bb} | {head.inst_number} : '
                   f'{head.dst} = '
                   f'{rev_match_instruction[type(head)]} '
                   f'{head.src0} {head.src1}')
@@ -304,7 +306,6 @@ def pretty_print(head, bb=0):
 
 def build_cfg(file_name):
     with open(file_name) as f:
-        # TODO: build the CFG here!
         lines = f.readlines()
     program = [Inst()]
     btStack = deque([(None, -1)])
