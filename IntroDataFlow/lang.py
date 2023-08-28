@@ -22,6 +22,7 @@ Example:
 """
 
 from collections import deque
+import json
 
 class Env:
     """
@@ -113,6 +114,11 @@ class Inst:
         s.NEXTS.append(next_inst)
     def add_prev(s, prev_inst):
         s.PREVS.append(prev_inst)
+    def get_next(s):
+        if len(s.NEXTS) > 0:
+            return s.NEXTS[0]
+        else:
+            return None
 
 class BinOp(Inst):
     """
@@ -207,13 +213,17 @@ class Bt(Inst):
         s.false_dst = false_dst
     def eval(s, env):
         """
-        The evaluation of a phi-function sets the next_inst argument in the
-        branch.
+        The evaluation of the condition sets the next_iter to the instruction.
+        This value determines which successor instruction is to be evaluated.
+        Any values greater than 0 are evaluated as True, while 0 corresponds to
+        False.
         """
         if env.get(s.cond):
-            super().set_next(s.true_dst)
+            s.next_iter = 0
         else:
-            super().set_next(s.false_dst)
+            s.next_iter = 1
+    def get_next(s):
+        return s.NEXTS[s.next_iter]
 
 
 match_instruction = {
@@ -312,7 +322,11 @@ def build_cfg(file_name):
     chain_instructions(0, lines[1:], program, btStack)
     # Pretty print it!
     pretty_print(program[1])
-    # call interp(cfg.start, environment, title)
+    envDict = json.loads(lines[0])
+    environment = Env()
+    for (k, v) in envDict.items():
+        environment.set(k, v)
+    interp(program[1], environment, "resulting environment")
 
 
 def interp(instruction, environment, title):
