@@ -263,7 +263,7 @@ def parse_bt(line):
 
 
 def points_to(bt, i):
-    return bt[1] == i
+    return bt.jump_number == i
 
 
 def chain_instructions(i, lines, program, btStack):
@@ -276,20 +276,23 @@ def chain_instructions(i, lines, program, btStack):
     if is_bt(line):
         (cond, trueIndex, falseIndex) = parse_bt(line)
         inst = Bt(cond)
-        btStack.appendleft((inst, falseIndex))
+        inst.jump_number = falseIndex
+        btStack.appendleft(inst)
+        # btStack.appendleft((inst, falseIndex))
 
     else:
         (dst, opcode, src0, src1) = parse_binop(line)
         inst = match_instruction[opcode](dst, src0, src1)
         # tail may be bt, must deal with this case
     if points_to(btStack[0], i):
-        btStack[0][0].add_next(inst)
+        btStack[0].add_next(inst)
         inst.add_prev(btStack[0])
         btStack.popleft()
     else:
-        tail = program[-1]
-        tail.add_next(inst)
-        inst.add_prev(tail)
+        if i > 0:
+            tail = program[-1]
+            tail.add_next(inst)
+            inst.add_prev(tail)
     inst.inst_number = i
     program.append(inst)
     chain_instructions(i+1, lines, program, btStack)
@@ -299,7 +302,8 @@ def pretty_print(head, bb=0):
     while True:
         if type(head) == Bt:
             print(f'{bb} | {head.inst_number} : '
-                  f'br {head.cond} {bb+1} {bb+2}\n')
+                  f'br {head.cond} {head.inst_number+1} '
+                  f'{head.jump_number}\n')
             pretty_print(head.NEXTS[0], bb+1)
             pretty_print(head.NEXTS[1], bb+2)
             break
@@ -317,16 +321,16 @@ def pretty_print(head, bb=0):
 def build_cfg(file_name):
     with open(file_name) as f:
         lines = f.readlines()
-    program = [Inst()]
+    program = []
     btStack = deque([(None, -1)])
     chain_instructions(0, lines[1:], program, btStack)
     # Pretty print it!
-    pretty_print(program[1])
+    pretty_print(program[0])
     envDict = json.loads(lines[0])
     environment = Env()
     for (k, v) in envDict.items():
         environment.set(k, v)
-    interp(program[1], environment, "resulting environment")
+    interp(program[0], environment, "resulting environment")
 
 
 def interp(instruction, environment, title):
