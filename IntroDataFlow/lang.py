@@ -293,22 +293,28 @@ def chain_instructions(i, lines, program, btStack):
             tail = program[-1]
             tail.add_next(inst)
             inst.add_prev(tail)
-    inst.inst_number = i
+    inst.index = i
     program.append(inst)
     chain_instructions(i+1, lines, program, btStack)
 
 
-def pretty_print(head, bb=0):
+def pretty_print(program):
+    print("----- Control Flow Graph -----")
+    print("BB\t| index\t| instruction")
+    _pretty_print(program[0], 0)
+
+
+def _pretty_print(head, bb=0):
     while True:
         if type(head) == Bt:
-            print(f'{bb} | {head.inst_number} : '
-                  f'br {head.cond} {head.inst_number+1} '
+            print(f'{bb}\t| {head.index}\t| '
+                  f'br {head.cond} {head.index+1} '
                   f'{head.jump_number}\n')
-            pretty_print(head.NEXTS[0], bb+1)
-            pretty_print(head.NEXTS[1], bb+2)
+            _pretty_print(head.NEXTS[0], bb+1)
+            _pretty_print(head.NEXTS[1], bb+2)
             break
         else:
-            print(f'{bb} | {head.inst_number} : '
+            print(f'{bb}\t| {head.index}\t| '
                   f'{head.dst} = '
                   f'{rev_match_instruction[type(head)]} '
                   f'{head.src0} {head.src1}')
@@ -335,7 +341,7 @@ def build_cfg(file_name):
     btStack = deque([(None, -1)])
     chain_instructions(0, lines[1:], program, btStack)
     # Pretty print it!
-    pretty_print(program[0])
+    pretty_print(program)
     envDict = json.loads(lines[0])
     environment = Env()
     for (k, v) in envDict.items():
@@ -359,7 +365,9 @@ def interp(instruction, environment, title):
 class Liveness:
     @classmethod
     def run(cls, program):
-        print(cls.IN(program[0]))
+        print("----- Liveness analysis -----")
+        print('index\t| analysis')
+        cls.IN(program[0])
 
     @classmethod
     def IN(cls, instruction):
@@ -367,7 +375,8 @@ class Liveness:
         # OUT(p) = Union(IN(ps)), ps in succ(p)
         _in = cls.OUT(instruction) - cls._v(instruction)
         _in = _in | cls.vars(instruction)
-        print(f'{instruction.inst_number} in: {_in}')
+        print(f'{instruction.index}\t|in: {_in}')
+        instruction.IN = _in
         return _in
 
     @classmethod
@@ -375,14 +384,15 @@ class Liveness:
         # IN(p)  = Union((OUT(p)\{v}), vars(p))
         # OUT(p) = Union(IN(ps)), ps in succ(p)
         if len(instruction.NEXTS) == 0:
-            print(f'{instruction.inst_number} out: {set()}')
+            print(f'{instruction.index}\t|out: {set()}')
             return set()
         else:
             out = set()
             for nxt in instruction.NEXTS:
                 _in = cls.IN(nxt)
                 out = out | _in
-            print(f'{instruction.inst_number} out: {out}')
+            print(f'{instruction.index}\t|out: {out}')
+            instruction.OUT = out
             return out
 
     @classmethod
