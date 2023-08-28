@@ -318,6 +318,16 @@ def pretty_print(head, bb=0):
             head = head.NEXTS[0]
 
 
+def run(file_name):
+    (program, environment) = build_cfg(file_name)
+    interp(program[0], environment, "resulting environment")
+
+
+def run_analysis(file_name, analysis):
+    (program, environment) = build_cfg(file_name)
+    analysis.run(program)
+
+
 def build_cfg(file_name):
     with open(file_name) as f:
         lines = f.readlines()
@@ -330,7 +340,7 @@ def build_cfg(file_name):
     environment = Env()
     for (k, v) in envDict.items():
         environment.set(k, v)
-    interp(program[0], environment, "resulting environment")
+    return (program, environment)
 
 
 def interp(instruction, environment, title):
@@ -344,3 +354,47 @@ def interp(instruction, environment, title):
     else:
         print(f'-------- {title} --------')
         environment.dump()
+
+
+class Liveness:
+    @classmethod
+    def run(cls, program):
+        print(cls.IN(program[0]))
+
+    @classmethod
+    def IN(cls, instruction):
+        # IN(p)  = Union((OUT(p)\{v}), vars(p))
+        # OUT(p) = Union(IN(ps)), ps in succ(p)
+        _in = cls.OUT(instruction) - cls._v(instruction)
+        _in = _in | cls.vars(instruction)
+        print(f'{instruction.inst_number} in: {_in}')
+        return _in
+
+    @classmethod
+    def OUT(cls, instruction):
+        # IN(p)  = Union((OUT(p)\{v}), vars(p))
+        # OUT(p) = Union(IN(ps)), ps in succ(p)
+        if len(instruction.NEXTS) == 0:
+            print(f'{instruction.inst_number} out: {set()}')
+            return set()
+        else:
+            out = set()
+            for nxt in instruction.NEXTS:
+                _in = cls.IN(nxt)
+                out = out | _in
+            print(f'{instruction.inst_number} out: {out}')
+            return out
+
+    @classmethod
+    def _v(cls, instruction):
+        if type(instruction) == Bt:
+            return set()
+        else:
+            return set([instruction.definition()])
+
+    @classmethod
+    def vars(cls, instruction):
+        if type(instruction) == Bt:
+            return set([instruction.cond])
+        else:
+            return set([*instruction.uses()])
