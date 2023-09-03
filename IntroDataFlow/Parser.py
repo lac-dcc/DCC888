@@ -1,8 +1,23 @@
+"""
+Parsing mechanism for .lang files
+This module takes into account the language specification in lang.py
+and implements a simple interpreter, as well as an exemplary Static
+Analysis strategy. The most important functions are "run", which takes a
+.lang file name and interprets the inheld program, as well as "run_analysis",
+which takes both the .lang file name and the strategy class as input to
+run an abstract interpretation of the program.
+"""
 import lang
 from collections import deque
 import json
 from abc import ABC, abstractclassmethod
 from typing import List, Set
+
+# Navigation:
+# - Parsing
+# - Satic Analysis
+
+# Parsing ---------------------------------------------------------------------
 
 match_instruction = {
     "add": lang.Add,
@@ -40,8 +55,11 @@ def parse_bt(line):
     return (cond, int(trueIndex), int(falseIndex))
 
 
-def points_to(bt, i):
-    return bt.jump_number == i
+def btStack_points_to(bt, i):
+    if len(bt) > 0:
+        return bt[0].jump_to == i
+    else:
+        return False
 
 
 def chain_instructions(i, lines, program, btStack):
@@ -54,7 +72,7 @@ def chain_instructions(i, lines, program, btStack):
     if is_bt(line):
         (cond, trueIndex, falseIndex) = parse_bt(line)
         inst = lang.Bt(cond)
-        inst.jump_number = falseIndex
+        inst.jump_to = falseIndex
         btStack.appendleft(inst)
         # btStack.appendleft((inst, falseIndex))
 
@@ -62,7 +80,7 @@ def chain_instructions(i, lines, program, btStack):
         (dst, opcode, src0, src1) = parse_binop(line)
         inst = match_instruction[opcode](dst, src0, src1)
         # tail may be bt, must deal with this case
-    if points_to(btStack[0], i):
+    if btStack_points_to(btStack, i):
         btStack[0].add_next(inst)
         inst.add_prev(btStack[0])
         btStack.popleft()
@@ -87,7 +105,7 @@ def _pretty_print(head, bb=0):
         if type(head) == lang.Bt:
             print(f'{bb}\t| {head.index}\t| '
                   f'br {head.cond} {head.index+1} '
-                  f'{head.jump_number}\n')
+                  f'{head.jump_to}\n')
             _pretty_print(head.NEXTS[0], bb+1)
             _pretty_print(head.NEXTS[1], bb+2)
             break
@@ -103,24 +121,24 @@ def _pretty_print(head, bb=0):
 
 
 def run(file_name):
-    (program, environment) = build_cfg(file_name)
+    with open(file_name) as f:
+        lines = f.readlines()
+    (program, environment) = build_cfg(lines)
     interp(program[0], environment, "resulting environment")
 
 
 def run_analysis(file_name, analysis):
-    (program, environment) = build_cfg(file_name)
+    with open(file_name) as f:
+        lines = f.readlines()
+    (program, environment) = build_cfg(lines)
     result = analysis.run(program)
     return result
 
 
-def build_cfg(file_name):
-    with open(file_name) as f:
-        lines = f.readlines()
+def build_cfg(lines):
     program = []
-    btStack = deque([(None, -1)])
+    btStack = deque()
     chain_instructions(0, lines[1:], program, btStack)
-    # Pretty print it!
-    pretty_print(program)
     envDict = json.loads(lines[0])
     environment = lang.Env()
     for (k, v) in envDict.items():
@@ -140,55 +158,120 @@ def interp(instruction, environment, title):
         print(f'-------- {title} --------')
         environment.dump()
 
-# Static Analysis --------------------------------------------------------------
+
+# Static Analysis -------------------------------------------------------------
+"""
+Three data types have been defined to orient any Static Analysis
+implementation.
+
+- First, the IN/OUT sets of each instruction are represented
+  through a single InstInOut object, which also contains the instruction's
+  index as means of identification.
+
+- The SAResult type indicates what should be returned by Static Analysis
+  algorithms, which is a list of InstInOut. It is implemented as an ordered
+  list by index, which relieves any analysis implementation from this concern.
+
+- The StaticAnalysis type represent a Static Analysis strategy. Any
+  implementation should inherit from this class and implement its "run"
+  interface.
+"""
 
 
 class InstInOut:
     def __init__(s, instNum: int, inSet: Set[str], outSet: Set[str]):
-        s.instNum   = instNum
-        s.inSet     = inSet
-        s.outSet    = outSet
+        s.index = instNum
+        s.inSet = inSet
+        s.outSet = outSet
 
     def __str__(s):
-        return f'{s.instNum}\tIN: {s.inSet}\n\tOUT: {s.outSet}'
+        return f'{s.index}\tIN: {s.inSet}\n\tOUT: {s.outSet}'
 
-SAResult = List[InstInOut]
+    def __eq__(self, o):
+        if self.inSet != o.inSet:
+            return False
+        if self.outSet != o.outSet:
+            return False
+        return True
+
+
+class SAResult(List):
+    def __init__(self, iterable):
+        super().__init__(iterable)
+
+    def append(s, item: InstInOut):
+        super().append(item)
+        super().sort(key=lambda x: x.index)
+
+    def __eq__(self, o):
+        for i in range(len(self)):
+            if self[i] != o[i]:
+                return False
+        return True
+
+    def print(s):
+        for i in s:
+            print(i)
+
 
 class StaticAnalysis(ABC):
     @abstractclassmethod
     def run(cls, program: List[lang.Inst]) -> SAResult:
-        pass
+        raise NotImplementedError
 
 
 class Liveness(StaticAnalysis):
+    """
+    Returns the liveness analysis of a program.
+    A variable is "alive" at a certain point in the code if it has been
+    defined and there is at least one path from this point which leads to its
+    current value being used. A variable "dies" if its value is reset.
+
+    >>> program_lines = [
+    ... '{"a": 1, "b": 2}',
+    ... 'x = add a b',
+    ... 'y = add x a',
+    ... 'b = add a x',
+    ... ]
+    >>> expected_result = SAResult([
+    ... InstInOut(0, set(['a', 'b']), set(['a', 'x'])),
+    ... InstInOut(1, set(['a', 'x']), set(['a', 'x'])),
+    ... InstInOut(2, set(['a', 'x']), set()),
+    ... InstInOut(3, set(['a', 'x']), set()),
+    ... ])
+    >>> program, env = build_cfg(program_lines)
+    >>> result = Liveness.run(program)
+    >>> result == expected_result
+    True
+    """
     @classmethod
-    def run(cls, program) -> SAResult:
+    def run(cls, program: List[lang.Inst]) -> SAResult:
         result = cls.IN(program[0])
         return result
 
     @classmethod
     def IN(cls, instruction):
         result, _out = cls.OUT(instruction)
-        # _in = cls.OUT(instruction) - cls._v(instruction)
         _in = _out - cls._v(instruction)
         _in = _in | cls.vars(instruction)
-        # instruction.IN = _in
         instInOut = InstInOut(instruction.index, _in, _out)
-        print(instInOut)
-        # return _in
-        return [instInOut] + result
+        # return [instInOut] + result
+        result.append(instInOut)
+        return result
 
     @classmethod
     def OUT(cls, instruction):
         if len(instruction.NEXTS) == 0:
             # print(f'{instruction.index}\t|out: {set()}')
-            return [], set()
+            return SAResult([]), set()
         else:
-            result = []
+            result = SAResult([])
             out = set()
             for nxt in instruction.NEXTS:
                 _result = cls.IN(nxt)
-                _in = result[-1].inSet
+                if len(_result) == 0:
+                    continue
+                _in = _result[0].inSet
                 result += _result
                 out = out | _in
             # print(f'{instruction.index}\t|out: {out}')
