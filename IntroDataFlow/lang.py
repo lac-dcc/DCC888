@@ -108,8 +108,7 @@ class Inst:
     def __init__(s):
         s.NEXTS = []
         s.PREVS = []
-        s.IN = set()
-        s.OUT = set()
+        s.index = 0
     def add_next(s, next_inst):
         s.NEXTS.append(next_inst)
     def add_prev(s, prev_inst):
@@ -202,6 +201,7 @@ class Bt(Inst):
         s.cond = cond
         s.true_dst = true_dst
         s.false_dst = false_dst
+        s.jump_to = 0
         super().__init__()
     def definition(s):
         return None
