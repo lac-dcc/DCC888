@@ -227,6 +227,13 @@ class Liveness(StaticAnalysis):
     defined and there is at least one path from this point which leads to its
     current value being used. A variable "dies" if its value is reset.
 
+    For each instruction
+        p: v = E(s)
+
+    The incoming and outgoing live variables are defined as:
+        IN:  Union((OUT(p) - {v}), vars(E))
+        OUT: Union(IN(ps)), ps in succ(p)
+
     >>> program_lines = [
     ... '{"a": 1, "b": 2}',
     ... 'x = add a b',
