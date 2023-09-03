@@ -4,25 +4,18 @@ Introduction to Data-Flow Analysis.
 This file contains the implementation of a simple interpreter of low-level
 instructions. The interpreter takes a program, represented as its first
 instruction, plus an environment, which is a stack of bindings. Bindings are
-pairs of variable names and values. New bindings are added to the stack whenever
-new variables are defined. Bindings are never removed from the stack. In this
-way, we can inspect the history of state transformations caused by the
+pairs of variable names and values. New bindings are added to the stack
+whenever new variables are defined. Bindings are never removed from the stack.
+In this way, we can inspect the history of state transformations caused by the
 interpretation of a program.
 
 This file uses doctests all over. To test it, just run python 3 as follows:
 "python3 -m doctest main.py". The program uses syntax that is excluive of
 Python 3. It will not work with standard Python 2.
-
-Example:
-    TODO: add another test here!
-
-    env = {a:3, b:3}
-    x = add a b
-    y = mul x x
 """
 
 from collections import deque
-import json
+
 
 class Env:
     """
@@ -78,7 +71,7 @@ class Env:
         correct binding.
         """
         val = next((value for (e_var, value) in self.env if pred(e_var)), None)
-        if val != None:
+        if val is not None:
             return val
         else:
             raise LookupError(f"Absent key {val}")
@@ -98,6 +91,7 @@ class Env:
         for (var, value) in s.env:
             print(f"{var}: {value}")
 
+
 class Inst:
     """
     The representation of instructions. All that an instruction has, that is
@@ -109,15 +103,19 @@ class Inst:
         s.NEXTS = []
         s.PREVS = []
         s.index = 0
+
     def add_next(s, next_inst):
         s.NEXTS.append(next_inst)
+
     def add_prev(s, prev_inst):
         s.PREVS.append(prev_inst)
+
     def get_next(s):
         if len(s.NEXTS) > 0:
             return s.NEXTS[0]
         else:
             return None
+
 
 class BinOp(Inst):
     """
@@ -130,8 +128,10 @@ class BinOp(Inst):
         s.src0 = src0
         s.src1 = src1
         super().__init__()
+
     def definition(s):
         return s.dst
+
     def uses(s):
         return [s.src0, s.src1]
 
@@ -152,6 +152,7 @@ class Add(BinOp):
     def eval(s, env):
         env.set(s.dst, env.get(s.src0) + env.get(s.src1))
 
+
 class Mul(BinOp):
     """
     Example:
@@ -163,6 +164,7 @@ class Mul(BinOp):
     """
     def eval(s, env):
         env.set(s.dst, env.get(s.src0) * env.get(s.src1))
+
 
 class Lth(BinOp):
     """
@@ -176,6 +178,7 @@ class Lth(BinOp):
     def eval(s, env):
         env.set(s.dst, env.get(s.src0) < env.get(s.src1))
 
+
 class Geq(BinOp):
     """
     Example:
@@ -188,6 +191,7 @@ class Geq(BinOp):
     def eval(s, env):
         env.set(s.dst, env.get(s.src0) >= env.get(s.src1))
 
+
 class Bt(Inst):
     """
     This is a Branch-If-True instruction, which diverts the control flow to the
@@ -195,22 +199,32 @@ class Bt(Inst):
     otherwise.
 
     Example:
-        TODO: add a test here!
+        >>> e = Env({"t": True, "x": 0})
+        >>> a = Add("x", "x", "x")
+        >>> m = Mul("x", "x", "x")
+        >>> b = Bt("t", a, m)
+        >>> b.eval(e)
+        >>> b.get_next() == a
+        True
     """
     def __init__(s, cond, true_dst=None, false_dst=None):
         s.cond = cond
-        s.true_dst = true_dst
-        s.false_dst = false_dst
         s.jump_to = 0
         super().__init__()
+        s.NEXTS = [true_dst, false_dst]
+
     def definition(s):
         return None
+
     def uses(s):
         return [s.cond]
+
     def set_true_dst(s, true_dst):
         s.true_dst = true_dst
+
     def set_false_dst(s, false_dst):
         s.false_dst = false_dst
+
     def eval(s, env):
         """
         The evaluation of the condition sets the next_iter to the instruction.
@@ -222,5 +236,6 @@ class Bt(Inst):
             s.next_iter = 0
         else:
             s.next_iter = 1
+
     def get_next(s):
         return s.NEXTS[s.next_iter]
