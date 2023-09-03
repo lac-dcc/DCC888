@@ -163,34 +163,37 @@ class StaticAnalysis(ABC):
 class Liveness(StaticAnalysis):
     @classmethod
     def run(cls, program) -> SAResult:
-        result: SAResult = []
-        cls.IN(program[0], result)
+        result = cls.IN(program[0])
         return result
 
     @classmethod
-    def IN(cls, instruction, result: SAResult):
-        _out = cls.OUT(instruction, result)
+    def IN(cls, instruction):
+        result, _out = cls.OUT(instruction)
         # _in = cls.OUT(instruction) - cls._v(instruction)
         _in = _out - cls._v(instruction)
         _in = _in | cls.vars(instruction)
         # instruction.IN = _in
         instInOut = InstInOut(instruction.index, _in, _out)
         print(instInOut)
-        return _in
+        # return _in
+        return [instInOut] + result
 
     @classmethod
-    def OUT(cls, instruction, result: SAResult):
+    def OUT(cls, instruction):
         if len(instruction.NEXTS) == 0:
             # print(f'{instruction.index}\t|out: {set()}')
-            return set()
+            return [], set()
         else:
+            result = []
             out = set()
             for nxt in instruction.NEXTS:
-                _in = cls.IN(nxt, result)
+                _result = cls.IN(nxt)
+                _in = result[-1].inSet
+                result += _result
                 out = out | _in
             # print(f'{instruction.index}\t|out: {out}')
-            #instruction.OUT = out
-            return out
+            # instruction.OUT = out
+            return result, out
 
     @classmethod
     def _v(cls, instruction):
