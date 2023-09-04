@@ -220,10 +220,10 @@ class Bt(Inst):
         return [s.cond]
 
     def set_true_dst(s, true_dst):
-        s.true_dst = true_dst
+        s.NEXTS[0] = true_dst
 
-    def set_false_dst(s, false_dst):
-        s.false_dst = false_dst
+    def add_next(s, false_dst):
+        s.NEXTS[1] = false_dst
 
     def eval(s, env):
         """

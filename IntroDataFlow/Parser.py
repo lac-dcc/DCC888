@@ -81,7 +81,7 @@ def chain_instructions(i, lines, program, btStack):
         inst = match_instruction[opcode](dst, src0, src1)
         # tail may be bt, must deal with this case
     if btStack_points_to(btStack, i):
-        btStack[0].add_next(inst)
+        btStack[0].set_true_dst(inst)
         inst.add_prev(btStack[0])
         btStack.popleft()
     else:
