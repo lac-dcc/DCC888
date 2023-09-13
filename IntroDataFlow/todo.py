@@ -1,6 +1,6 @@
 import lang
 from typing import List
-from Parser import SAResult, StaticAnalysis
+from parser import SAResult, StaticAnalysis
 
 
 class ReachingDefinitions(StaticAnalysis):
