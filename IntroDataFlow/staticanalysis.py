@@ -1,6 +1,7 @@
 import lang
+from parser import build_cfg
 from abc import ABC, abstractclassmethod
-from typing import List
+from typing import List, Type
 """
 Four data types have been defined to orient any Static Analysis
 implementation.
@@ -38,7 +39,7 @@ class Equation:
     >>> x = Equation('x')
     >>> y = Equation('y')
     >>> eq1 = Equation(x, 'union', y)
-    >>> eq2 = Equation(eq1, 'minus', Equation('set', '2,3'))
+    >>> eq2 = Equation(eq1, 'minus', Equation('set', {'2','3'}))
     >>> eq2.solve(env) == {'1', '4'}
     True
 
@@ -60,10 +61,9 @@ class Equation:
             return f'{str(s.left)} {s.op} {str(s.right)}'
 
     def solve(s, env: ConstraintEnv):
-        if s.left == "empty":
-            return set()
-        elif s.left == "set":
-            return set(s.op.split(','))
+        if s.left == "set":
+            return s.op
+            # return set(s.op.split(','))
         elif s.op == "":
             return env.get(s.left)
         else:
@@ -91,7 +91,7 @@ class Constraint:
     represent data flow analysis constraints regarding IN and OUT sets.
     >>> env = ConstraintEnv({'x': {}, 'y':{4}, 'z': {2,3}})
     >>> x = Constraint('x', Equation(Equation('y'), 'union', Equation('z')))
-    >>> x.eval(env)
+    >>> _ = x.eval(env)
     >>> env.get('x') == {2, 3, 4}
     True
 
@@ -114,6 +114,14 @@ class StaticAnalysis(ABC):
     @abstractclassmethod
     def run(cls, program: List[lang.Inst]) -> ConstraintEnv:
         raise NotImplementedError
+
+
+def run_analysis(file_name: str, analysis: Type[StaticAnalysis]):
+    with open(file_name) as f:
+        lines = f.readlines()
+    (program, environment) = build_cfg(lines)
+    result = analysis.run(program)
+    return result
 
 
 class Liveness(StaticAnalysis):
@@ -159,21 +167,23 @@ class Liveness(StaticAnalysis):
     @classmethod
     def definitions_equation(cls, instruction: lang.Inst) -> Equation:
         v = cls.definitions(instruction)
-        if len(v) > 0:
-            v = [str(i) for i in v]
-            v = ",".join(v)
-            return Equation('set', f'{v}')
-        else:
-            return Equation('empty')
+        return Equation('set', v)
+        # if len(v) > 0:
+        #     v = [str(i) for i in v]
+        #     v = ",".join(v)
+        #     return Equation('set', f'{v}')
+        # else:
+        #     return Equation('empty')
 
     @classmethod
     def vars_equation(cls, instruction: lang.Inst) -> Equation:
         vs = cls.vars(instruction)
-        if len(vs) > 0:
-            vs = [str(i) for i in vs]
-            vs = ",".join(vs)
-            return Equation('set', f'{vs}')
-        return Equation('empty')
+        return Equation('set', vs)
+        # if len(vs) > 0:
+        #     vs = [str(i) for i in vs]
+        #     vs = ",".join(vs)
+        #     return Equation('set', f'{vs}')
+        # return Equation('empty')
 
     @classmethod
     def build_constraints(cls, program: List[lang.Inst]) -> List[Constraint]:
@@ -213,7 +223,7 @@ class Liveness(StaticAnalysis):
     @classmethod
     def OUT(cls, instruction):
         if len(instruction.NEXTS) == 0:
-            _out = Equation('empty')
+            _out = Equation('set', set())
 
         elif len(instruction.NEXTS) == 1:
             nxt = instruction.NEXTS[0]

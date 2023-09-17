@@ -10,8 +10,6 @@ run an abstract interpretation of the program.
 import lang
 from collections import deque
 import json
-from typing import Type
-from staticanalysis import StaticAnalysis
 
 match_instruction = {
     "add": lang.Add,
@@ -119,14 +117,6 @@ def run(file_name):
         lines = f.readlines()
     (program, environment) = build_cfg(lines)
     interp(program[0], environment, "resulting environment")
-
-
-def run_analysis(file_name: str, analysis: Type[StaticAnalysis]):
-    with open(file_name) as f:
-        lines = f.readlines()
-    (program, environment) = build_cfg(lines)
-    result = analysis.run(program)
-    return result
 
 
 def build_cfg(lines):
