@@ -28,10 +28,18 @@ class Equation:
     analysis. Use the Constraint API to represent data flow equations.
     """
 
-    def __init__(self, left, op="", right=None):
-        self.left = left
-        self.op = op
-        self.right = right
+    def __init__(s, left, op="", right=None):
+        s.left = left
+        s.op = op
+        s.right = right
+
+    def __str__(s):
+        if s.op is None:
+            return f'{str(s.left)}'
+        elif s.right is None:
+            return f'{str(s.left)} {s.op}'
+        else:
+            return f'{str(s.left)} {s.op} {str(s.right)}'
 
     def solve(s, env: ConstraintEnv):
         if s.left == "empty":
@@ -80,6 +88,9 @@ class Constraint:
     def eval(s, env):
         return env.update(s.id, s.eq.solve(env))
 
+    def __str__(s):
+        return f'{s.id}: {str(s.eq)}'
+
 
 _env = dict()
 for i in range(1, 7):
@@ -90,13 +101,13 @@ env = ConstraintEnv(_env)
 constraints = [
     Constraint('IN_1', Equation('set', '')),
     Constraint('IN_2',
-                Equation(Equation('OUT_1'), 'union', Equation('OUT_3'))),
+               Equation(Equation('OUT_1'), 'union', Equation('OUT_3'))),
     Constraint('IN_3', Equation('OUT_2')),
     Constraint('IN_4',
-                Equation(Equation('OUT_1'), 'union', Equation('OUT_5'))),
+               Equation(Equation('OUT_1'), 'union', Equation('OUT_5'))),
     Constraint('IN_5', Equation('OUT_4')),
     Constraint('IN_6',
-                Equation(Equation('OUT_2'), 'union', Equation('OUT_4'))),
+               Equation(Equation('OUT_2'), 'union', Equation('OUT_4'))),
     Constraint('OUT_1', Equation('IN_1')),
     Constraint('OUT_2', Equation('IN_2')),
     Constraint(
