@@ -12,6 +12,7 @@ from collections import deque
 import json
 from abc import ABC, abstractclassmethod
 from typing import List, Set
+from worklist import ConstraintEnv, Constraint, Equation, chaotic_iterations
 
 # Navigation:
 # - Parsing
@@ -253,8 +254,49 @@ class Liveness(StaticAnalysis):
     """
     @classmethod
     def run(cls, program: List[lang.Inst]) -> SAResult:
-        result = cls.IN(program[0])
-        return result
+        # result = cls.IN(program[0])
+        constraints = cls.build_constraints(program)
+        env = cls.build_constraint_env(program)
+        return chaotic_iterations(constraints, env)
+
+    @classmethod
+    def build_constraints(cls, program: List[lang.Inst]) -> List[Constraint]:
+        constraints = []
+        for instruction in program:
+            v = cls._v(instruction)
+            v = [str(i) for i in v]
+            v = ",".join(v)
+            vs = cls.vars(instruction)
+            vs = [str(i) for i in v]
+            vs = ",".join(v)
+            _in = Equation(
+                Equation(
+                    Equation(f'OUT_{instruction.index}'),
+                    'minus',
+                    Equation(f'set {v}')
+                ),
+                'union',
+                Equation(f'set {vs}')
+            )
+            constraints.append(
+                Constraint(f'IN_{instruction.index}', _in)
+            )
+            if len(instruction.NEXTS) == 0:
+                _out = Equation('empty')
+            for nxt in instruction.NEXTS:
+                
+            constraints.append(
+                Constraint(f'OUT_{instruction.index}', _out)
+            )
+
+
+    @classmethod
+    def build_constraint_env(cls, program: List[lang.Inst]) -> ConstraintEnv:
+        env = dict()
+        for i in range(len(program)):
+            env[f'IN_{i}'] = set()
+            env[f'OUT_{i}'] = set()
+        return ConstraintEnv(env)
 
     @classmethod
     def IN(cls, instruction):
