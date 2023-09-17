@@ -256,39 +256,67 @@ class Liveness(StaticAnalysis):
     def run(cls, program: List[lang.Inst]) -> SAResult:
         # result = cls.IN(program[0])
         constraints = cls.build_constraints(program)
+        [print(str(c)) for c in constraints]
         env = cls.build_constraint_env(program)
-        return chaotic_iterations(constraints, env)
+        chaotic_iterations(constraints, env)
+        return env
+
+    @classmethod
+    def v_equation(cls, instruction: lang.Inst) -> Equation:
+        v = cls._v(instruction)
+        if len(v) > 0:
+            v = [str(i) for i in v]
+            v = ",".join(v)
+            return Equation('set', f'{v}')
+        else:
+            return Equation('empty')
+
+    @classmethod
+    def vs_equation(cls, instruction: lang.Inst) -> Equation:
+        vs = cls.vars(instruction)
+        if len(vs) > 0:
+            vs = [str(i) for i in vs]
+            vs = ",".join(vs)
+            return Equation('set', f'{vs}')
+        return Equation('empty')
 
     @classmethod
     def build_constraints(cls, program: List[lang.Inst]) -> List[Constraint]:
         constraints = []
         for instruction in program:
-            v = cls._v(instruction)
-            v = [str(i) for i in v]
-            v = ",".join(v)
-            vs = cls.vars(instruction)
-            vs = [str(i) for i in v]
-            vs = ",".join(v)
             _in = Equation(
                 Equation(
                     Equation(f'OUT_{instruction.index}'),
                     'minus',
-                    Equation(f'set {v}')
+                    cls.v_equation(instruction)
                 ),
                 'union',
-                Equation(f'set {vs}')
+                cls.vs_equation(instruction)
             )
             constraints.append(
                 Constraint(f'IN_{instruction.index}', _in)
             )
+
             if len(instruction.NEXTS) == 0:
                 _out = Equation('empty')
-            for nxt in instruction.NEXTS:
-                
+
+            elif len(instruction.NEXTS) == 1:
+                nxt = instruction.NEXTS[0]
+                _out = Equation(f'IN_{nxt.index}')
+
+            else:
+                first = instruction.NEXTS[0]
+                second = instruction.NEXTS[1]
+                _out = Equation(
+                    Equation(f'IN_{first.index}'),
+                    'union',
+                    Equation(f'IN_{second.index}')
+                )
+
             constraints.append(
                 Constraint(f'OUT_{instruction.index}', _out)
             )
-
+        return constraints
 
     @classmethod
     def build_constraint_env(cls, program: List[lang.Inst]) -> ConstraintEnv:
