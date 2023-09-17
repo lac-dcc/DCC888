@@ -138,6 +138,8 @@ class Liveness(StaticAnalysis):
         IN:  Union((OUT(p) - {v}), vars(E))
         OUT: Union(IN(ps)), ps in succ(p)
 
+    (read more in https://homepages.dcc.ufmg.br/~fernando/classes/dcc888/ementa/slides/IntroDataFlow.pdf)
+
     >>> program_lines = [
     ... '{"a": 1, "b": 2}',
     ... 'x = add a b',
@@ -168,22 +170,11 @@ class Liveness(StaticAnalysis):
     def definitions_equation(cls, instruction: lang.Inst) -> Equation:
         v = cls.definitions(instruction)
         return Equation('set', v)
-        # if len(v) > 0:
-        #     v = [str(i) for i in v]
-        #     v = ",".join(v)
-        #     return Equation('set', f'{v}')
-        # else:
-        #     return Equation('empty')
 
     @classmethod
     def vars_equation(cls, instruction: lang.Inst) -> Equation:
         vs = cls.vars(instruction)
         return Equation('set', vs)
-        # if len(vs) > 0:
-        #     vs = [str(i) for i in vs]
-        #     vs = ",".join(vs)
-        #     return Equation('set', f'{vs}')
-        # return Equation('empty')
 
     @classmethod
     def build_constraints(cls, program: List[lang.Inst]) -> List[Constraint]:

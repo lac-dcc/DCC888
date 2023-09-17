@@ -1,6 +1,9 @@
 import lang
+from parser import build_cfg
+from staticanalysis import ConstraintEnv, Constraint, Equation, \
+    StaticAnalysis, chaotic_iterations
+
 from typing import List
-from parser import SAResult, StaticAnalysis
 
 
 class ReachingDefinitions(StaticAnalysis):
@@ -16,6 +19,8 @@ class ReachingDefinitions(StaticAnalysis):
         IN:  Union(OUT(ps), ps in succ(p)
         OUT: Union(IN(p) - {definitions(v)}, {(p, v)})
 
+    (read more in https://homepages.dcc.ufmg.br/~fernando/classes/dcc888/ementa/slides/IntroDataFlow.pdf)
+
     Since the program starts with a set environment, definitions from said
     environment are said to come from instruction -1.
 
@@ -25,31 +30,34 @@ class ReachingDefinitions(StaticAnalysis):
     ... 'a = add x a',
     ... 'b = add a x',
     ... ]
-    >>> expected_result = SAResult([
-    ...     InstInOut(0,
-    ...         set([(-1, 'a'), (-1, 'b')]),
-    ...         set([(-1, 'a'), (-1, 'b'), (0, 'x')])
-    ...     ),
-    ...     InstInOut(1,
-    ...         set([(-1, 'a'), (-1, 'b'), (0, 'x')]),
-    ...         set([(1, 'a'), (-1, 'b'), (0, 'x')])
-    ...     )),
-    ...     InstInOut(2,
-    ...         set([(1, 'a'), (-1, 'b'), (0, 'x')])
-    ...         set([(1, 'a'), (1, 'b'), (0, 'x')])
-    ...     )),
-    ... ])
+    >>> expected_result = ConstraintEnv({
+    ... 'IN_0': {(-1, 'a'), (-1, 'b')},
+    ... 'OUT_0': {(-1, 'a'), (-1, 'b'), (0, 'x')},
+    ... 'IN_1': {(-1, 'a'), (-1, 'b'), (0, 'x')},
+    ... 'OUT_1': {(1, 'a'), (-1, 'b'), (0, 'x')},
+    ... 'IN_2': {(1, 'a'), (-1, 'b'), (0, 'x')},
+    ... 'OUT_2':{(1, 'a'), (1, 'b'), (0, 'x')},
+    ... })
     >>> program, env = build_cfg(program_lines)
-    >>> result = Liveness.run(program)
+    >>> result = ReachingDefinitions.run(program)
     >>> result == expected_result
     True
     """
 
     @classmethod
-    def run(cls, program: List[lang.Inst]) -> SAResult:
+    def run(cls, program: List[lang.Inst]) -> ConstraintEnv:
         """
-        TODO: Implement reaching definitions here.
-        you may implement any auxiliary class methods.
-        as long as 'run' returns an SAResult value.
+        TODO: given a program, run through its instructions and create IN and
+        OUT constraints for Reaching Definitions. Then, use chaotic iterations
+        to solve said constraints.
+        You may implement any auxiliary class methods,
+        as long as 'run' returns the correct ConstraintEnv.
+
+        The building blocks for the implementation are provided in the
+        staticanalysis module: Equation, Constraint, ConstraintEnv,
+        chaotic_iterations.
+
+        Use the Liveness implementation found in staticanalysis.py
+        as an example.
         """
         raise NotImplementedError
