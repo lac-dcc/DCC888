@@ -30,6 +30,10 @@ class ConstraintEnv:
     def __eq__(s, o) -> bool:
         return s.env == o.env
 
+    def print(s):
+        sorted_keys = list(s.env.keys()).sort(key=lambda key: key[-1])
+        for key in sorted_keys:
+            ordered_values = list(s.env[key])
 
 class Equation:
     """
