@@ -34,7 +34,9 @@ class Equation:
         self.right = right
 
     def solve(s, env: ConstraintEnv):
-        if s.left == "set":
+        if s.left == "empty":
+            return set()
+        elif s.left == "set":
             return set(s.op.split(','))
         elif s.op == "":
             return env.get(s.left)
@@ -136,10 +138,4 @@ def chaotic_iterations(constraints, env):
     print(env.env)
 
 
-chaotic_iterations(constraints, env)
-
-
-def build_constraints(program):
-    constraints_list = []
-    for instruction in program:
-        constraint_name = f'IN_{str(instruction.index)}'
+# chaotic_iterations(constraints, env)
