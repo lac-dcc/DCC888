@@ -262,8 +262,8 @@ class Liveness(StaticAnalysis):
         return env
 
     @classmethod
-    def v_equation(cls, instruction: lang.Inst) -> Equation:
-        v = cls._v(instruction)
+    def definitions_equation(cls, instruction: lang.Inst) -> Equation:
+        v = cls.definitions(instruction)
         if len(v) > 0:
             v = [str(i) for i in v]
             v = ",".join(v)
@@ -272,7 +272,7 @@ class Liveness(StaticAnalysis):
             return Equation('empty')
 
     @classmethod
-    def vs_equation(cls, instruction: lang.Inst) -> Equation:
+    def vars_equation(cls, instruction: lang.Inst) -> Equation:
         vs = cls.vars(instruction)
         if len(vs) > 0:
             vs = [str(i) for i in vs]
@@ -284,35 +284,11 @@ class Liveness(StaticAnalysis):
     def build_constraints(cls, program: List[lang.Inst]) -> List[Constraint]:
         constraints = []
         for instruction in program:
-            _in = Equation(
-                Equation(
-                    Equation(f'OUT_{instruction.index}'),
-                    'minus',
-                    cls.v_equation(instruction)
-                ),
-                'union',
-                cls.vs_equation(instruction)
-            )
+            _in = cls.IN(instruction)
             constraints.append(
                 Constraint(f'IN_{instruction.index}', _in)
             )
-
-            if len(instruction.NEXTS) == 0:
-                _out = Equation('empty')
-
-            elif len(instruction.NEXTS) == 1:
-                nxt = instruction.NEXTS[0]
-                _out = Equation(f'IN_{nxt.index}')
-
-            else:
-                first = instruction.NEXTS[0]
-                second = instruction.NEXTS[1]
-                _out = Equation(
-                    Equation(f'IN_{first.index}'),
-                    'union',
-                    Equation(f'IN_{second.index}')
-                )
-
+            _out = cls.OUT(instruction)
             constraints.append(
                 Constraint(f'OUT_{instruction.index}', _out)
             )
@@ -328,35 +304,38 @@ class Liveness(StaticAnalysis):
 
     @classmethod
     def IN(cls, instruction):
-        result, _out = cls.OUT(instruction)
-        _in = _out - cls._v(instruction)
-        _in = _in | cls.vars(instruction)
-        instInOut = InstInOut(instruction.index, _in, _out)
-        # return [instInOut] + result
-        result.append(instInOut)
-        return result
+        _in = Equation(
+            Equation(
+                Equation(f'OUT_{instruction.index}'),
+                'minus',
+                cls.definitions_equation(instruction)
+            ),
+            'union',
+            cls.vars_equation(instruction)
+        )
+        return _in
 
     @classmethod
     def OUT(cls, instruction):
         if len(instruction.NEXTS) == 0:
-            # print(f'{instruction.index}\t|out: {set()}')
-            return SAResult([]), set()
+            _out = Equation('empty')
+
+        elif len(instruction.NEXTS) == 1:
+            nxt = instruction.NEXTS[0]
+            _out = Equation(f'IN_{nxt.index}')
+
         else:
-            result = SAResult([])
-            out = set()
-            for nxt in instruction.NEXTS:
-                _result = cls.IN(nxt)
-                if len(_result) == 0:
-                    continue
-                _in = _result[0].inSet
-                result += _result
-                out = out | _in
-            # print(f'{instruction.index}\t|out: {out}')
-            # instruction.OUT = out
-            return result, out
+            first = instruction.NEXTS[0]
+            second = instruction.NEXTS[1]
+            _out = Equation(
+                Equation(f'IN_{first.index}'),
+                'union',
+                Equation(f'IN_{second.index}')
+            )
+        return _out
 
     @classmethod
-    def _v(cls, instruction):
+    def definitions(cls, instruction):
         if type(instruction) == lang.Bt:
             return set()
         else:
