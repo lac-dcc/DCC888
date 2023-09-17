@@ -11,6 +11,9 @@ class ConstraintEnv:
         s.env[id] = value
         return True
 
+    def __eq__(s, o) -> bool:
+        return s.env == o.env
+
 
 class Equation:
     """
@@ -146,7 +149,5 @@ def chaotic_iterations(constraints, env):
                 count += 1
         if count == len(constraints):
             break
-    print(env.env)
-
-
+    return env
 # chaotic_iterations(constraints, env)
