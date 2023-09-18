@@ -126,10 +126,16 @@ class StaticAnalysis(ABC):
         raise NotImplementedError
 
 
-def run_analysis(file_name: str, analysis: Type[StaticAnalysis]):
+def run_analysis_on_file(file_name: str, analysis: Type[StaticAnalysis]):
     with open(file_name) as f:
         lines = f.readlines()
     (program, environment) = build_cfg(lines)
+    result = analysis.run(program)
+    return result
+
+
+def run_analysis_on_program(program: List[lang.Inst],
+                            analysis: Type[StaticAnalysis]):
     result = analysis.run(program)
     return result
 
