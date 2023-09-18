@@ -31,9 +31,15 @@ class ConstraintEnv:
         return s.env == o.env
 
     def print(s):
-        sorted_keys = list(s.env.keys()).sort(key=lambda key: key[-1])
-        for key in sorted_keys:
-            ordered_values = list(s.env[key])
+        size = int(len(s.env)/2)
+        for i in range(size):
+            ordered_values = list(s.env[f'IN_{i}'])
+            ordered_values.sort(key=lambda key: str(key))
+            print(f'IN_{i}: {ordered_values}')
+            ordered_values = list(s.env[f'OUT_{i}'])
+            ordered_values.sort(key=lambda key: str(key))
+            print(f'OUT_{i}: {ordered_values}')
+
 
 class Equation:
     """
