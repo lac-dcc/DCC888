@@ -45,6 +45,20 @@ class Equation:
     """
     Equations represent generic set operations which can be recursively
     combined.
+
+    Equations may be a reference to a variable in ConstraintEnv:
+    >>> env = ConstraintEnv({'x': {'a'}})
+    >>> x = Equation('x')
+    >>> x.solve(env)
+    {'a'}
+
+    Equations may also initialize a new set:
+    >>> env = ConstraintEnv(dict())
+    >>> x = Equation('set', set([1]))
+    >>> x.solve(env)
+    {1}
+
+    Finally, equations represent operations between equations:
     >>> env = ConstraintEnv({'x': {'1','2','3'}, 'y':{'4'}})
     >>> x = Equation('x')
     >>> y = Equation('y')
@@ -52,9 +66,6 @@ class Equation:
     >>> eq2 = Equation(eq1, 'minus', Equation('set', {'2','3'}))
     >>> eq2.solve(env) == {'1', '4'}
     True
-
-    Note that Equations do no have special meaning in the context of data flow
-    analysis. Use the Constraint API to represent data flow equations.
     """
 
     def __init__(s, left, op="", right=None):
