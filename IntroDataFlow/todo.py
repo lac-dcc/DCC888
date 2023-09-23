@@ -1,6 +1,6 @@
 import lang
 from parser import build_cfg
-from staticanalysis import ConstraintEnv, Constraint, Equation, \
+from static_analysis import ConstraintEnv, Constraint, Equation, \
     StaticAnalysis, chaotic_iterations
 
 from typing import List
@@ -57,7 +57,7 @@ class ReachingDefinitions(StaticAnalysis):
         staticanalysis module: Equation, Constraint, ConstraintEnv,
         chaotic_iterations.
 
-        Use the Liveness implementation found in staticanalysis.py
+        Use the Liveness implementation found in static_analysis.py
         as an example.
         """
         raise NotImplementedError

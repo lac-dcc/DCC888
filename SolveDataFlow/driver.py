@@ -2,7 +2,7 @@
 import sys
 import todo
 import parser
-import staticanalysis as sa
+import static_analysis as sa
 
 
 def run_test():
