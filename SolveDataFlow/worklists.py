@@ -95,15 +95,20 @@ class DependenceGraph:
         head_index = s.labels[head]
         s.adjm.add_arc(foot_index, head_index)
 
+    def remove_dependence(s, foot: str, head: str):
+        foot_index = s.labels[foot]
+        head_index = s.labels[head]
+        s.adjm.add_arc(foot_index, head_index)
+
     def print(s):
         for label in s.labels:
-            affects = s._affects(label)
-            affected_by = s._affected_by(label)
+            affects = s.affects(label)
+            affected_by = s.affected_by(label)
             print(f'label: {label}\n'
                   f'affects: {affects}\n'
                   f'affected by: {affected_by}')
 
-    def _affects(s, label: str) -> Set[str]:
+    def affects(s, label: str) -> Set[str]:
         label_index = s.labels[label]
         row = s.adjm.get(label_index)
         nbs = []
@@ -112,7 +117,7 @@ class DependenceGraph:
                 nbs.append(s.rlabels[i])
         return set(nbs)
 
-    def _affected_by(s, label: str) -> Set[str]:
+    def affected_by(s, label: str) -> Set[str]:
         label_index = s.labels[label]
         row = s.adjm.get(label_index)
         nbs = []
