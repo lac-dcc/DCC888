@@ -84,11 +84,18 @@ class Equation:
     def solve(s, env: ConstraintEnv):
         if s.left == "set":
             return s.op
-            # return set(s.op.split(','))
         elif s.op == "":
             return env.get(s.left)
         else:
             return s.opTable.get(s.op)(s.left, s.right, env)
+
+    def variables(s):
+        if s.left == "set":
+            return set()
+        elif s.op == "":
+            return set([s.left])
+        else:
+            return s.left.variables() | s.right.variables()
 
     def Union(left, right, env: ConstraintEnv):
         return left.solve(env) | right.solve(env)
@@ -126,6 +133,9 @@ class Constraint:
 
     def eval(s, env):
         return env.update(s.id, s.eq.solve(env))
+
+    def uses(s):
+        return s.eq.variables()
 
     def __str__(s):
         return f'{s.id}: {str(s.eq)}'
@@ -192,6 +202,10 @@ class Liveness(StaticAnalysis):
         env = cls.build_constraint_env(program)
         env = chaotic_iterations(constraints, env)
         return env
+
+    @classmethod
+    def test(cls, program: List[lang.Inst]) -> ConstraintEnv:
+        return cls.build_constraints(program)
 
     @classmethod
     def definitions_equation(cls, instruction: lang.Inst) -> Equation:
