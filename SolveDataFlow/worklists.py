@@ -141,7 +141,7 @@ class Worklist:
         for c in constraints:
             uses = c.uses()
             for var in uses:
-                s.dg.add_dependence(var, c)
+                s.dg.add_dependence(var, c.id)
 
     def insert(s, constraint: Constraint):
         pass
