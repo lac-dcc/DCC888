@@ -204,10 +204,6 @@ class Liveness(StaticAnalysis):
         return env
 
     @classmethod
-    def test(cls, program: List[lang.Inst]) -> ConstraintEnv:
-        return cls.build_constraints(program)
-
-    @classmethod
     def definitions_equation(cls, instruction: lang.Inst) -> Equation:
         v = cls.definitions(instruction)
         return Equation('set', v)
