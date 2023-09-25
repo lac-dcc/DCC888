@@ -133,9 +133,10 @@ class Worklist:
         cIds = [c.id for c in constraints]
         s.dg = DependenceGraph(cIds)
         s.build_dependences(constraints)
-        s.cs = dict()
+        s.worklist = constraints
+        s.csMap = dict()
         for c in constraints:
-            s.cs[c.id] = c
+            s.csMap[c.id] = c
 
     def build_dependences(s, constraints: List[Constraint]):
         for c in constraints:
@@ -144,17 +145,20 @@ class Worklist:
                 s.dg.add_dependence(var, c.id)
 
     def insert(s, constraint: Constraint):
-        pass
+        s.worklist.append(constraint)
 
     def extract(s) -> Constraint:
-        pass
+        head = s.worklist.pop()
+        if len(s.worklist) == 0:
+            s.empty = True
+        return head
 
     def empty(s) -> bool:
         pass
 
     def affected_constraints(s, c: Constraint):
         ids = s.dg.affects(c.id)
-        cs = [s.cs[id] for id in ids]
+        cs = [s.csMap[id] for id in ids]
         return cs
 
 
@@ -167,3 +171,4 @@ def solve_worklist(constraints: List[Constraint], env: ConstraintEnv):
             affected = worklist.affected_constraints(constr)
             for c in affected:
                 worklist.insert(c)
+    return env
