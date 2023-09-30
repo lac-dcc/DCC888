@@ -35,10 +35,10 @@ class ConstraintEnv:
         for i in range(size):
             ordered_values = list(s.env[f'IN_{i}'])
             ordered_values.sort(key=lambda key: str(key))
-            print(f'IN_{i}: {ordered_values}')
+            print(f'IN_{i}: {", ".join(ordered_values)}')
             ordered_values = list(s.env[f'OUT_{i}'])
             ordered_values.sort(key=lambda key: str(key))
-            print(f'OUT_{i}: {ordered_values}')
+            print(f'OUT_{i}: {", ".join(ordered_values)}')
 
 
 class Equation:
