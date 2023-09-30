@@ -1,7 +1,5 @@
-import lang
 from typing import List, Set
-from static_analysis import ConstraintEnv, Constraint, Equation, \
-    StaticAnalysis
+from static_analysis import ConstraintEnv, Constraint
 
 
 class AdjacencyMatrix:
