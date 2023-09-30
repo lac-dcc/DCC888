@@ -1,7 +1,7 @@
 import lang
 from parser import build_cfg
 from abc import ABC, abstractclassmethod
-from typing import List, Type
+from typing import List, Type, Callable
 """
 Four data types have been defined to orient any Static Analysis
 implementation.
@@ -39,6 +39,9 @@ class ConstraintEnv:
             ordered_values = list(s.env[f'OUT_{i}'])
             ordered_values.sort(key=lambda key: str(key))
             print(f'OUT_{i}: {", ".join(ordered_values)}')
+
+    def copy(s):
+        return ConstraintEnv(s.env.copy())
 
 
 class Equation:
@@ -197,10 +200,10 @@ class Liveness(StaticAnalysis):
     True
     """
     @classmethod
-    def run(cls, program: List[lang.Inst]) -> ConstraintEnv:
+    def run(cls, program: List[lang.Inst], solver: Callable) -> ConstraintEnv:
         constraints = cls.build_constraints(program)
         env = cls.build_constraint_env(program)
-        env = chaotic_iterations(constraints, env)
+        env = solver(constraints, env)
         return env
 
     @classmethod

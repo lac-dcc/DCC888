@@ -153,17 +153,16 @@ class Worklist:
             s.empty = True
         return head
 
-    def empty(s) -> bool:
-        pass
-
     def affected_constraints(s, c: Constraint):
         ids = s.dg.affects(c.id)
         cs = [s.csMap[id] for id in ids]
         return cs
 
 
-def solve_worklist(constraints: List[Constraint], env: ConstraintEnv):
+def solve_worklist(constraints: List[Constraint], _env: ConstraintEnv) \
+        -> ConstraintEnv:
     worklist = Worklist(constraints)
+    env = _env.copy()
     while not worklist.empty:
         constr = worklist.extract()
         update = constr.eval(env)

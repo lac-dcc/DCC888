@@ -2,16 +2,14 @@
 import sys
 import parser
 import static_analysis as sa
-import worklist
+from worklist import solve_worklist
 
 
 def run_test():
     lines = sys.stdin.readlines()
     program, _ = parser.build_cfg(lines)
-    cs = sa.Liveness.build_constraints(program)
-    env = sa.Liveness.build_constraint_env(program)
-    sol = worklist.solve_worklist(cs, env)
-    sol.print()
+    result = sa.Liveness.run(program, solve_worklist)
+    result.print()
 
 
 if __name__ == "__main__":
