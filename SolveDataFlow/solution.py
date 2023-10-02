@@ -1,5 +1,5 @@
-from typing import List, Set
-from static_analysis import ConstraintEnv, Constraint
+from typing import List
+from static_analysis import ConstraintEnv, Constraint, DependenceGraph
 
 
 class Worklist:
