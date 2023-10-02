@@ -43,8 +43,8 @@ def parse_binop(line):
 
 
 def parse_bt(line):
-    (_, cond, trueIndex, falseIndex) = line.split(" ")
-    return (cond, int(trueIndex), int(falseIndex))
+    (_, cond, trueIndex) = line.split(" ")
+    return (cond, int(trueIndex))
 
 
 def btStack_points_to(bt, i):
@@ -62,10 +62,9 @@ def chain_instructions(i, lines, program, btList, instruction_table):
 #        (var, value) = parse_set(line)
 #        env.set(var, value)
     if is_bt(line):
-        (cond, trueIndex, falseIndex) = parse_bt(line)
+        (cond, trueIndex) = parse_bt(line)
         inst = lang.Bt(cond)
         inst.jump_true = trueIndex
-        inst.jump_false = falseIndex
         btList.append(inst)
         # btStack.appendleft((inst, falseIndex))
 
@@ -90,7 +89,6 @@ def chain_instructions(i, lines, program, btList, instruction_table):
 def resolve_bts(btList, instruction_table):
     for bt in btList:
         bt.set_true_dst(instruction_table[bt.jump_true])
-        bt.set_false_dst(instruction_table[bt.jump_false])
 
 
 
