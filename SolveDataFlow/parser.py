@@ -43,18 +43,18 @@ def parse_binop(line):
 
 
 def parse_bt(line):
-    (_, cond, trueIndex, falseIndex) = line.split(" ")
-    return (cond, int(trueIndex), int(falseIndex))
+    (_, cond, trueIndex) = line.split(" ")
+    return (cond, int(trueIndex))
 
 
 def btStack_points_to(bt, i):
     if len(bt) > 0:
-        return bt[0].jump_to == i
+        return bt[0].jump_false == i
     else:
         return False
 
 
-def chain_instructions(i, lines, program, btStack):
+def chain_instructions(i, lines, program, btList, instruction_table):
     if i >= len(lines):
         return
     line = lines[i]
@@ -62,28 +62,34 @@ def chain_instructions(i, lines, program, btStack):
 #        (var, value) = parse_set(line)
 #        env.set(var, value)
     if is_bt(line):
-        (cond, trueIndex, falseIndex) = parse_bt(line)
+        (cond, trueIndex) = parse_bt(line)
         inst = lang.Bt(cond)
-        inst.jump_to = falseIndex
-        btStack.appendleft(inst)
+        inst.jump_true = trueIndex
+        btList.append(inst)
         # btStack.appendleft((inst, falseIndex))
 
     else:
         (dst, opcode, src0, src1) = parse_binop(line)
         inst = match_instruction[opcode](dst, src0, src1)
         # tail may be bt, must deal with this case
-    if btStack_points_to(btStack, i):
-        btStack[0].set_true_dst(inst)
-        inst.add_prev(btStack[0])
-        btStack.popleft()
-    else:
-        if i > 0:
-            tail = program[-1]
-            tail.add_next(inst)
-            inst.add_prev(tail)
+    # if btStack_points_to(btStack, i):
+    #     btStack[0].set_false_dst(inst)
+    #     inst.add_prev(btStack[0])
+    #     btStack.popleft()
+    if i > 0:
+        tail = program[-1]
+        tail.add_next(inst)
+        inst.add_prev(tail)
     inst.index = i
+    instruction_table[i] = inst
     program.append(inst)
-    chain_instructions(i+1, lines, program, btStack)
+    chain_instructions(i+1, lines, program, btList, instruction_table)
+
+
+def resolve_bts(btList, instruction_table):
+    for bt in btList:
+        bt.set_true_dst(instruction_table[bt.jump_true])
+
 
 
 def pretty_print(program):
@@ -121,8 +127,10 @@ def run(file_name):
 
 def build_cfg(lines):
     program = []
-    btStack = deque()
-    chain_instructions(0, lines[1:], program, btStack)
+    btList = []
+    instruction_table = dict()
+    chain_instructions(0, lines[1:], program, btList, instruction_table)
+    resolve_bts(btList, instruction_table)
     envDict = json.loads(lines[0])
     environment = lang.Env()
     for (k, v) in envDict.items():
