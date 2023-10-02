@@ -219,8 +219,11 @@ class Bt(Inst):
     def uses(s):
         return [s.cond]
 
-    def set_false_dst(s, true_dst):
-        s.NEXTS[1] = true_dst
+    def set_false_dst(s, false_dst):
+        s.NEXTS[1] = false_dst
+
+    def set_true_dst(s, true_dst):
+        s.NEXTS[0] = true_dst
 
     def add_next(s, false_dst):
         s.NEXTS[0] = false_dst

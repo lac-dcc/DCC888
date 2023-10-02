@@ -54,7 +54,7 @@ def btStack_points_to(bt, i):
         return False
 
 
-def chain_instructions(i, lines, program, btStack, instruction_table):
+def chain_instructions(i, lines, program, btList, instruction_table):
     if i >= len(lines):
         return
     line = lines[i]
@@ -64,18 +64,19 @@ def chain_instructions(i, lines, program, btStack, instruction_table):
     if is_bt(line):
         (cond, trueIndex, falseIndex) = parse_bt(line)
         inst = lang.Bt(cond)
+        inst.jump_true = trueIndex
         inst.jump_false = falseIndex
-        btStack.appendleft(inst)
+        btList.append(inst)
         # btStack.appendleft((inst, falseIndex))
 
     else:
         (dst, opcode, src0, src1) = parse_binop(line)
         inst = match_instruction[opcode](dst, src0, src1)
         # tail may be bt, must deal with this case
-    if btStack_points_to(btStack, i):
-        btStack[0].set_false_dst(inst)
-        inst.add_prev(btStack[0])
-        btStack.popleft()
+    # if btStack_points_to(btStack, i):
+    #     btStack[0].set_false_dst(inst)
+    #     inst.add_prev(btStack[0])
+    #     btStack.popleft()
     if i > 0:
         tail = program[-1]
         tail.add_next(inst)
@@ -83,7 +84,14 @@ def chain_instructions(i, lines, program, btStack, instruction_table):
     inst.index = i
     instruction_table[i] = inst
     program.append(inst)
-    chain_instructions(i+1, lines, program, btStack, instruction_table)
+    chain_instructions(i+1, lines, program, btList, instruction_table)
+
+
+def resolve_bts(btList, instruction_table):
+    for bt in btList:
+        bt.set_true_dst(instruction_table[bt.jump_true])
+        bt.set_false_dst(instruction_table[bt.jump_false])
+
 
 
 def pretty_print(program):
@@ -121,9 +129,10 @@ def run(file_name):
 
 def build_cfg(lines):
     program = []
-    btStack = deque()
+    btList = []
     instruction_table = dict()
-    chain_instructions(0, lines[1:], program, btStack, instruction_table)
+    chain_instructions(0, lines[1:], program, btList, instruction_table)
+    resolve_bts(btList, instruction_table)
     envDict = json.loads(lines[0])
     environment = lang.Env()
     for (k, v) in envDict.items():
@@ -137,7 +146,6 @@ def interp(instruction, environment, title):
     evaluate.
     """
     if instruction:
-        print(f"now evaluating {instruction}")
         instruction.eval(environment)
         interp(instruction.get_next(), environment, title)
     else:
