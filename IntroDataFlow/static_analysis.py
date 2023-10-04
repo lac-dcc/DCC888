@@ -1,7 +1,7 @@
 import lang
 from parser import build_cfg
 from abc import ABC, abstractclassmethod
-from typing import List, Type
+from typing import List, Type, Callable
 """
 Four data types have been defined to orient any Static Analysis
 implementation.
@@ -124,34 +124,10 @@ class Liveness(StaticAnalysis):
     """
     @classmethod
     def run(cls, program: List[lang.Inst]) -> ConstraintEnv:
-        constraints = cls.build_constraints(program)
         env = cls.build_constraint_env(program)
+        constraints = cls.build_constraints(program, env)
         env = chaotic_iterations(constraints, env)
         return env
-
-    @classmethod
-    def definitions_equation(cls, instruction: lang.Inst) -> Equation:
-        v = cls.definitions(instruction)
-        return Equation('set', v)
-
-    @classmethod
-    def vars_equation(cls, instruction: lang.Inst) -> Equation:
-        vs = cls.vars(instruction)
-        return Equation('set', vs)
-
-    @classmethod
-    def build_constraints(cls, program: List[lang.Inst]) -> List[Constraint]:
-        constraints = []
-        for instruction in program:
-            _in = cls.IN(instruction)
-            constraints.append(
-                Constraint(f'IN_{instruction.index}', _in)
-            )
-            _out = cls.OUT(instruction)
-            constraints.append(
-                Constraint(f'OUT_{instruction.index}', _out)
-            )
-        return constraints
 
     @classmethod
     def build_constraint_env(cls, program: List[lang.Inst]) -> ConstraintEnv:
@@ -162,36 +138,42 @@ class Liveness(StaticAnalysis):
         return ConstraintEnv(env)
 
     @classmethod
-    def IN(cls, instruction):
-        _in = Equation(
-            Equation(
-                Equation(f'OUT_{instruction.index}'),
-                'minus',
-                cls.definitions_equation(instruction)
-            ),
-            'union',
-            cls.vars_equation(instruction)
-        )
+    def build_constraints(cls, program: List[lang.Inst], env: ConstraintEnv) \
+            -> List[Constraint]:
+        constraints = []
+        for instruction in program:
+            _in = cls.IN(instruction, env)
+            constraints.append(
+                Constraint(f'IN_{instruction.index}', _in)
+            )
+            _out = cls.OUT(instruction, env)
+            constraints.append(
+                Constraint(f'OUT_{instruction.index}', _out)
+            )
+        return constraints
+
+    @classmethod
+    def IN(cls, instruction: lang.Inst, env: ConstraintEnv) -> Callable:
+        def _in():
+            return (env.get(f'OUT_{instruction.index}')
+                    - cls.definitions(instruction)) \
+                    | cls.vars(instruction)
         return _in
 
     @classmethod
-    def OUT(cls, instruction):
+    def OUT(cls, instruction: lang.Inst, env: ConstraintEnv) -> Callable:
         if len(instruction.NEXTS) == 0:
-            _out = Equation('set', set())
+            return lambda: set()
 
         elif len(instruction.NEXTS) == 1:
             nxt = instruction.NEXTS[0]
-            _out = Equation(f'IN_{nxt.index}')
+            return lambda: env.get(f'IN_{nxt.index}')
 
         else:
             first = instruction.NEXTS[0]
             second = instruction.NEXTS[1]
-            _out = Equation(
-                Equation(f'IN_{first.index}'),
-                'union',
-                Equation(f'IN_{second.index}')
-            )
-        return _out
+            return lambda: env.get(f'IN_{first.index}') \
+                | env.get(f'IN_{second.index}')
 
     @classmethod
     def definitions(cls, instruction):
