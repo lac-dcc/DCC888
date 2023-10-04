@@ -41,77 +41,13 @@ class ConstraintEnv:
             print(f'OUT_{i}: {", ".join(ordered_values)}')
 
 
-class Equation:
-    """
-    Equations represent generic set operations which can be recursively
-    combined.
-
-    Equations may be a reference to a variable in ConstraintEnv:
-    >>> env = ConstraintEnv({'x': {'a'}})
-    >>> x = Equation('x')
-    >>> x.solve(env)
-    {'a'}
-
-    Equations may also initialize a new set:
-    >>> env = ConstraintEnv(dict())
-    >>> x = Equation('set', set([1]))
-    >>> x.solve(env)
-    {1}
-
-    Finally, equations represent operations between equations:
-    >>> env = ConstraintEnv({'x': {'1','2','3'}, 'y':{'4'}})
-    >>> x = Equation('x')
-    >>> y = Equation('y')
-    >>> eq1 = Equation(x, 'union', y)
-    >>> eq2 = Equation(eq1, 'minus', Equation('set', {'2','3'}))
-    >>> eq2.solve(env) == {'1', '4'}
-    True
-    """
-
-    def __init__(s, left, op="", right=None):
-        s.left = left
-        s.op = op
-        s.right = right
-
-    def __str__(s):
-        if s.op is None:
-            return f'{str(s.left)}'
-        elif s.right is None:
-            return f'{str(s.left)} {s.op}'
-        else:
-            return f'{str(s.left)} {s.op} {str(s.right)}'
-
-    def solve(s, env: ConstraintEnv):
-        if s.left == "set":
-            return s.op
-            # return set(s.op.split(','))
-        elif s.op == "":
-            return env.get(s.left)
-        else:
-            return s.opTable.get(s.op)(s.left, s.right, env)
-
-    def Union(left, right, env: ConstraintEnv):
-        return left.solve(env) | right.solve(env)
-
-    def Minus(left, right, env: ConstraintEnv):
-        return left.solve(env) - right.solve(env)
-
-    def Inter(left, right, env: ConstraintEnv):
-        return left.solve(env).intersection(right.solve(env))
-
-    opTable = {
-        "union": Union,
-        "minus": Minus,
-        "inter": Inter,
-    }
-
-
 class Constraint:
     """
     Constraints are named equations bound to a mutable environment. They
     represent data flow analysis constraints regarding IN and OUT sets.
     >>> env = ConstraintEnv({'x': {}, 'y':{4}, 'z': {2,3}})
-    >>> x = Constraint('x', Equation(Equation('y'), 'union', Equation('z')))
+    >>> x_eq = lambda: env.get('y') | env.get('z')
+    >>> x = Constraint('x', x_eq)
     >>> _ = x.eval(env)
     >>> env.get('x') == {2, 3, 4}
     True
@@ -125,7 +61,7 @@ class Constraint:
         s.eq = eq
 
     def eval(s, env):
-        return env.update(s.id, s.eq.solve(env))
+        return env.update(s.id, s.eq())
 
     def __str__(s):
         return f'{s.id}: {str(s.eq)}'
