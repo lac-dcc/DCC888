@@ -134,13 +134,14 @@ def run_analysis_on_file(file_name: str, analysis: Type[StaticAnalysis]):
     with open(file_name) as f:
         lines = f.readlines()
     (program, environment) = build_cfg(lines)
-    result = analysis.run(program)
+    result = analysis.run(program, environment)
     return result
 
 
 def run_analysis_on_program(program: List[lang.Inst],
+                            env: lang.Env,
                             analysis: Type[StaticAnalysis]):
-    result = analysis.run(program)
+    result = analysis.run(program, env)
     return result
 
 

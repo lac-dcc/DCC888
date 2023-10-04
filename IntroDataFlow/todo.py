@@ -1,9 +1,7 @@
 import lang
 from parser import build_cfg
-from static_analysis import ConstraintEnv, Constraint, Equation, \
-    StaticAnalysis, chaotic_iterations
-
-from typing import List
+from typing import Callable
+from static_analysis import ConstraintEnv, StaticAnalysis
 
 
 class ReachingDefinitions(StaticAnalysis):
@@ -34,9 +32,9 @@ class ReachingDefinitions(StaticAnalysis):
     ... 'IN_0': {(-1, 'a'), (-1, 'b')},
     ... 'OUT_0': {(-1, 'a'), (-1, 'b'), (0, 'x')},
     ... 'IN_1': {(-1, 'a'), (-1, 'b'), (0, 'x')},
-    ... 'OUT_1': {(1, 'a'), (-1, 'b'), (0, 'x')},
-    ... 'IN_2': {(1, 'a'), (-1, 'b'), (0, 'x')},
-    ... 'OUT_2':{(1, 'a'), (1, 'b'), (0, 'x')},
+    ... 'OUT_1': {(-1, 'b'), (0, 'x'), (1, 'a')},
+    ... 'IN_2': {(-1, 'b'), (0, 'x'), (1, 'a')},
+    ... 'OUT_2':{(0, 'x'), (1, 'a'), (2, 'b')},
     ... })
     >>> program, env = build_cfg(program_lines)
     >>> result = ReachingDefinitions.run(program)
@@ -45,19 +43,21 @@ class ReachingDefinitions(StaticAnalysis):
     """
 
     @classmethod
-    def run(cls, program: List[lang.Inst]) -> ConstraintEnv:
+    def IN(cls, instruction: lang.Inst,
+           cEnv: ConstraintEnv,
+           env: lang.Env) -> Callable:
         """
-        TODO: given a program, run through its instructions and create IN and
-        OUT constraints for Reaching Definitions. Then, use chaotic iterations
-        to solve said constraints.
-        You may implement any auxiliary class methods,
-        as long as 'run' returns the correct ConstraintEnv.
+        TODO: implement the IN function given each constraint.
+        An example for Liveness is implemented at static_analysis.py
+        """
+        raise NotImplementedError
 
-        The building blocks for the implementation are provided in the
-        staticanalysis module: Equation, Constraint, ConstraintEnv,
-        chaotic_iterations.
-
-        Use the Liveness implementation found in static_analysis.py
-        as an example.
+    @classmethod
+    def OUT(cls, instruction: lang.Inst,
+            cEnv: ConstraintEnv,
+            env: lang.Env) -> Callable:
+        """
+        TODO: implement the OUT function given each constraint.
+        An example for Liveness is implemented at static_analysis.py
         """
         raise NotImplementedError

@@ -7,8 +7,12 @@ import static_analysis as sa
 
 def run_test():
     lines = sys.stdin.readlines()
-    program, _ = parser.build_cfg(lines)
-    result = sa.run_analysis_on_program(program, todo.ReachingDefinitions)
+    program, env = parser.build_cfg(lines)
+    result = sa.run_analysis_on_program(
+        program,
+        env,
+        todo.ReachingDefinitions
+    )
     result.print()
 
 
