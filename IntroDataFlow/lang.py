@@ -91,6 +91,15 @@ class Env:
         for (var, value) in s.env:
             print(f"{var}: {value}")
 
+    def definitions(s):
+        """
+        Returns the set of variables that have been defined in the environment
+        """
+        vs = set()
+        for definition in s.env:
+            vs.add(definition[0])
+        return vs
+
 
 class Inst:
     """
