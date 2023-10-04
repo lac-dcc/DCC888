@@ -1,9 +1,8 @@
 import lang
 from parser import build_cfg
-from static_analysis import ConstraintEnv, Constraint, Equation, \
+from typing import List, Callable
+from static_analysis import ConstraintEnv, Constraint, \
     StaticAnalysis, chaotic_iterations
-
-from typing import List
 
 
 class ReachingDefinitions(StaticAnalysis):
@@ -40,30 +39,17 @@ class ReachingDefinitions(StaticAnalysis):
     ... })
     >>> program, env = build_cfg(program_lines)
     >>> result = ReachingDefinitions.run(program)
+    >>> result.print()
     >>> result == expected_result
     True
     """
 
     @classmethod
     def run(cls, program: List[lang.Inst]) -> ConstraintEnv:
-        constraints = cls.build_constraints(program)
         env = cls.build_constraint_env(program)
+        constraints = cls.build_constraints(program, env)
         env = chaotic_iterations(constraints, env)
         return env
-
-    @classmethod
-    def build_constraints(cls, program: List[lang.Inst]) -> List[Constraint]:
-        constraints = []
-        for instruction in program:
-            _in = cls.IN(instruction)
-            constraints.append(
-                Constraint(f'IN_{instruction.index}', _in)
-            )
-            _out = cls.OUT(instruction)
-            constraints.append(
-                Constraint(f'OUT_{instruction.index}', _out)
-            )
-        return constraints
 
     @classmethod
     def build_constraint_env(cls, program: List[lang.Inst]) -> ConstraintEnv:
@@ -74,34 +60,39 @@ class ReachingDefinitions(StaticAnalysis):
         return ConstraintEnv(env)
 
     @classmethod
-    def IN(cls, instruction: lang.Inst) -> Equation:
-        eq = Equation('set', set())
-        for pred in instruction.PREVS:
-            _eq = Equation(eq, 'union', Equation(f'OUT_{pred.index}'))
-            eq = _eq
-        return eq
+    def build_constraints(cls, program: List[lang.Inst], env: ConstraintEnv) \
+            -> List[Constraint]:
+        constraints = []
+        for instruction in program:
+            _in = cls.IN(instruction, env)
+            constraints.append(
+                Constraint(f'IN_{instruction.index}', _in)
+            )
+            _out = cls.OUT(instruction, env)
+            constraints.append(
+                Constraint(f'OUT_{instruction.index}', _out)
+            )
+        return constraints
 
     @classmethod
-    def OUT(cls, instruction: lang.Inst) -> Equation:
+    def IN(cls, instruction: lang.Inst, env: ConstraintEnv) -> Callable:
+        def _in():
+            res = set()
+            for pred in instruction.PREVS:
+                res = res | env.get(f'OUT_{pred.index}')
+            return res
+
+        return _in
+
+    @classmethod
+    def OUT(cls, instruction: lang.Inst, env: ConstraintEnv) -> Callable:
         _defs = cls.definitions(instruction)
         defs = []
         for d in _defs:
             defs.append((instruction.index, d))
-        _out = Equation(
-            Equation(
-                Equation(f'IN_{instruction.index}'),
-                'minus',
-                cls.definitions_equation(instruction)
-            ),
-            'union',
-            Equation('set', set(defs))
-        )
-        return _out
 
-    @classmethod
-    def definitions_equation(cls, instruction: lang.Inst) -> Equation:
-        v = cls.definitions(instruction)
-        return Equation('set', v)
+        return lambda: (env.get(f'IN_{instruction.index}') - _defs) \
+            | set(defs)
 
     @classmethod
     def definitions(cls, instruction):
