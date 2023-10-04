@@ -71,8 +71,63 @@ class Constraint:
 
 class StaticAnalysis(ABC):
     @abstractclassmethod
-    def run(cls, program: List[lang.Inst]) -> ConstraintEnv:
+    def IN(cls,
+           program: List[lang.Inst],
+           cEnv: ConstraintEnv,
+           env: lang.Env) -> Callable:
         raise NotImplementedError
+
+    @abstractclassmethod
+    def OUT(cls,
+            program: List[lang.Inst],
+            cEnv: ConstraintEnv,
+            env: lang.Env) -> Callable:
+        raise NotImplementedError
+
+    @classmethod
+    def run(cls, program: List[lang.Inst], env: lang.Env) -> ConstraintEnv:
+        cEnv = cls.build_constraint_env(program)
+        constraints = cls.build_constraints(program, cEnv, env)
+        cEnv = chaotic_iterations(constraints, cEnv)
+        return cEnv
+
+    @classmethod
+    def build_constraint_env(cls, program: List[lang.Inst]) -> ConstraintEnv:
+        env = dict()
+        for i in range(len(program)):
+            env[f'IN_{i}'] = set()
+            env[f'OUT_{i}'] = set()
+        return ConstraintEnv(env)
+
+    @classmethod
+    def build_constraints(cls, program: List[lang.Inst],
+                          cEnv: ConstraintEnv,
+                          env: lang.Env) -> List[Constraint]:
+        constraints = []
+        for instruction in program:
+            _in = cls.IN(instruction, cEnv, env)
+            constraints.append(
+                Constraint(f'IN_{instruction.index}', _in)
+            )
+            _out = cls.OUT(instruction, cEnv, env)
+            constraints.append(
+                Constraint(f'OUT_{instruction.index}', _out)
+            )
+        return constraints
+
+    @classmethod
+    def definitions(cls, instruction):
+        if type(instruction) == lang.Bt:
+            return set()
+        else:
+            return set([instruction.definition()])
+
+    @classmethod
+    def vars(cls, instruction):
+        if type(instruction) == lang.Bt:
+            return set([instruction.cond])
+        else:
+            return set([*instruction.uses()])
 
 
 def run_analysis_on_file(file_name: str, analysis: Type[StaticAnalysis]):
@@ -120,76 +175,37 @@ class Liveness(StaticAnalysis):
     ... 'OUT_2': set(),
     ... })
     >>> program, env = build_cfg(program_lines)
-    >>> result = Liveness.run(program)
+    >>> result = Liveness.run(program, env)
     >>> result == expected_result
     True
     """
-    @classmethod
-    def run(cls, program: List[lang.Inst]) -> ConstraintEnv:
-        env = cls.build_constraint_env(program)
-        constraints = cls.build_constraints(program, env)
-        env = chaotic_iterations(constraints, env)
-        return env
 
     @classmethod
-    def build_constraint_env(cls, program: List[lang.Inst]) -> ConstraintEnv:
-        env = dict()
-        for i in range(len(program)):
-            env[f'IN_{i}'] = set()
-            env[f'OUT_{i}'] = set()
-        return ConstraintEnv(env)
-
-    @classmethod
-    def build_constraints(cls, program: List[lang.Inst], env: ConstraintEnv) \
-            -> List[Constraint]:
-        constraints = []
-        for instruction in program:
-            _in = cls.IN(instruction, env)
-            constraints.append(
-                Constraint(f'IN_{instruction.index}', _in)
-            )
-            _out = cls.OUT(instruction, env)
-            constraints.append(
-                Constraint(f'OUT_{instruction.index}', _out)
-            )
-        return constraints
-
-    @classmethod
-    def IN(cls, instruction: lang.Inst, env: ConstraintEnv) -> Callable:
+    def IN(cls, instruction: lang.Inst,
+           cEnv: ConstraintEnv,
+           env: lang.Env) -> Callable:
         def _in():
-            return (env.get(f'OUT_{instruction.index}')
+            return (cEnv.get(f'OUT_{instruction.index}')
                     - cls.definitions(instruction)) \
                     | cls.vars(instruction)
         return _in
 
     @classmethod
-    def OUT(cls, instruction: lang.Inst, env: ConstraintEnv) -> Callable:
+    def OUT(cls, instruction: lang.Inst,
+            cEnv: ConstraintEnv,
+            env: lang.Env) -> Callable:
         if len(instruction.NEXTS) == 0:
             return lambda: set()
 
         elif len(instruction.NEXTS) == 1:
             nxt = instruction.NEXTS[0]
-            return lambda: env.get(f'IN_{nxt.index}')
+            return lambda: cEnv.get(f'IN_{nxt.index}')
 
         else:
             first = instruction.NEXTS[0]
             second = instruction.NEXTS[1]
-            return lambda: env.get(f'IN_{first.index}') \
-                | env.get(f'IN_{second.index}')
-
-    @classmethod
-    def definitions(cls, instruction):
-        if type(instruction) == lang.Bt:
-            return set()
-        else:
-            return set([instruction.definition()])
-
-    @classmethod
-    def vars(cls, instruction):
-        if type(instruction) == lang.Bt:
-            return set([instruction.cond])
-        else:
-            return set([*instruction.uses()])
+            return lambda: cEnv.get(f'IN_{first.index}') \
+                | cEnv.get(f'IN_{second.index}')
 
 
 def chaotic_iterations(constraints, env):
