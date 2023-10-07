@@ -2,7 +2,7 @@
 import sys
 import parser
 import static_analysis as sa
-from worklist import solve_worklist
+from todo import solve_worklist
 
 
 def run_test():
