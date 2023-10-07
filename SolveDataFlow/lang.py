@@ -91,6 +91,15 @@ class Env:
         for (var, value) in s.env:
             print(f"{var}: {value}")
 
+    def definitions(s):
+        """
+        Returns the set of variables that have been defined in the environment
+        """
+        vs = set()
+        for definition in s.env:
+            vs.add(definition[0])
+        return vs
+
 
 class Inst:
     """
@@ -130,10 +139,10 @@ class BinOp(Inst):
         super().__init__()
 
     def definition(s):
-        return s.dst
+        return set([s.dst])
 
     def uses(s):
-        return [s.src0, s.src1]
+        return set([s.src0, s.src1])
 
 
 class Add(BinOp):
@@ -214,10 +223,10 @@ class Bt(Inst):
         s.NEXTS = [true_dst, false_dst]
 
     def definition(s):
-        return None
+        return set()
 
     def uses(s):
-        return [s.cond]
+        return set([s.cond])
 
     def set_true_dst(s, true_dst):
         s.NEXTS[0] = true_dst
