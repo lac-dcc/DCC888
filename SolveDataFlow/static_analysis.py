@@ -1,7 +1,7 @@
 import lang
 from parser import build_cfg
 from abc import ABC, abstractclassmethod
-from typing import List, Type, Callable
+from typing import List, Type, Callable, Set
 """
 Four data types have been defined to orient any Static Analysis
 implementation.
