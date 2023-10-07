@@ -115,19 +115,19 @@ class StaticAnalysis(ABC):
             )
         return constraints
 
-    @classmethod
-    def definitions(cls, instruction):
-        if type(instruction) == lang.Bt:
-            return set()
-        else:
-            return set([instruction.definition()])
+    # @classmethod
+    # def definitions(cls, instruction):
+    #     if type(instruction) == lang.Bt:
+    #         return set()
+    #     else:
+    #         return set([instruction.definition()])
 
-    @classmethod
-    def vars(cls, instruction):
-        if type(instruction) == lang.Bt:
-            return set([instruction.cond])
-        else:
-            return set([*instruction.uses()])
+    # @classmethod
+    # def vars(cls, instruction):
+    #     if type(instruction) == lang.Bt:
+    #         return set([instruction.cond])
+    #     else:
+    #         return set([*instruction.uses()])
 
 
 def run_analysis_on_file(file_name: str, analysis: Type[StaticAnalysis]):
@@ -187,8 +187,8 @@ class Liveness(StaticAnalysis):
            env: lang.Env) -> Callable:
         def _in():
             return (cEnv.get(f'OUT_{instruction.index}')
-                    - cls.definitions(instruction)) \
-                    | cls.vars(instruction)
+                    - instruction.definition()) \
+                    | instruction.uses()
         return _in
 
     @classmethod

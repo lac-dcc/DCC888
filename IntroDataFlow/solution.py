@@ -66,7 +66,7 @@ class ReachingDefinitions(StaticAnalysis):
     def OUT(cls, instruction: lang.Inst,
             cEnv: ConstraintEnv,
             env: lang.Env) -> Callable:
-        _defs = cls.definitions(instruction)
+        _defs = instruction.definition()
         new_defs = set()
         for d in _defs:
             new_defs.add((instruction.index, d))
