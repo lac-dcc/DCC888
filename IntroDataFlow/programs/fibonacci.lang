@@ -8,3 +8,4 @@ pred = add zero aux
 count = add count one
 repeat = geq iter count
 bt repeat 3
+end = add zero zero
