@@ -53,10 +53,6 @@ class Constraint:
     >>> _ = x.eval(env)
     >>> env.get('x') == {2, 3, 4}
     True
-
-    Note that, while Equations return a resulting set based on its operations,
-    Constraint objects actually update their environment, since a Constraint's
-    value may influence others.
     """
     def __init__(s, id, eq):
         s.id = id
