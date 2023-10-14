@@ -8,7 +8,6 @@ which takes both the .lang file name and the strategy class as input to
 run an abstract interpretation of the program.
 """
 import lang
-from collections import deque
 import json
 
 match_instruction = {
@@ -91,7 +90,6 @@ def resolve_bts(btList, instruction_table):
         bt.set_true_dst(instruction_table[bt.jump_true])
 
 
-
 def pretty_print(program):
     print("----- Control Flow Graph -----")
     print("BB\t| index\t| instruction")
@@ -100,7 +98,7 @@ def pretty_print(program):
 
 def _pretty_print(head, bb=0):
     while True:
-        if type(head) == lang.Bt:
+        if head is lang.Bt:
             print(f'{bb}\t| {head.index}\t| '
                   f'br {head.cond} {head.index+1} '
                   f'{head.jump_to}\n')
