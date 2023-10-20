@@ -169,16 +169,34 @@ def to_basic_blocks(program):
         if type(program[i]) is lang.Bt:
             leaders.append(i+1)
             leaders.append(program[i].jump_to)
-    print(leaders)
+    bb_map = dict()
+
     for i in range(len(leaders)):
         begin = leaders[i]
         if i == len(leaders)-1:
-            bbs.append(BasicBlock(program[begin:]))
+            bb = BasicBlock(program[begin:])
         else:
             end = leaders[i+1]
-            bbs.append(BasicBlock(program[begin:end]))
-    return bbs
+            bb = BasicBlock(program[begin:end])
+        bb_map[leaders[i]] = bb
+        bbs.append(bb)
 
+    for i in range(len(leaders)-1):
+        current_bb = bbs[i]
+        last_inst = current_bb.instructions[-1]
+        continue_target_leader = leaders[i+1]
+        continue_target = bb_map[continue_target_leader]
+        current_bb.add_next(continue_target)
+        bb_map[continue_target_leader].add_previous(current_bb)
+
+        if type(last_inst) is not lang.Bt:
+            continue
+        jump_target_leader = last_inst.jump_to
+        jump_target = bb_map[jump_target_leader]
+        current_bb.add_next(jump_target)
+        bb_map[jump_target_leader].add_previous(current_bb)
+
+    return bbs
 
 # def to_ssa(program, environment):
 #     count = dict()
