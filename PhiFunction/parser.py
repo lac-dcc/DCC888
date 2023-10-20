@@ -198,10 +198,21 @@ def to_basic_blocks(program):
 
     return bbs
 
-# def to_ssa(program, environment):
-#     count = dict()
-#     stack = dict()
-#     for var in environment.definitions():
-#         count[var] = 0
-#         stack[var] = [0]
-#     return (ssa_program, ssa_environment)
+
+def bb_to_ssa(bb, environment):
+    pass
+
+
+def to_ssa(program, environment):
+    count = dict()
+    stack = dict()
+    for var in environment.definitions():
+        count[var] = 0
+        stack[var] = [0]
+
+    bbs = to_basic_blocks(program)
+    ssa_program = []
+    ssa_environment = lang.Env()
+    for bb in bbs:
+        ssa_bb, ssa_environment = bb_to_ssa(bb, ssa_environment)
+    return (ssa_program, ssa_environment)
