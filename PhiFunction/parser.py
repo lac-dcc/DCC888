@@ -27,7 +27,8 @@ rev_match_instruction = {
 
 
 class BasicBlock:
-    def __init__(s, instructions):
+    def __init__(s, instructions, index):
+        s.index = index
         s.instructions = instructions
         s.NEXTS = []
         s.PREVS = []
@@ -37,6 +38,12 @@ class BasicBlock:
 
     def add_previous(s, prev):
         s.PREVS.append(prev)
+
+    def definitions(s):
+        return set([inst.definition() for inst in s.instructions])
+
+    def uses(s):
+        return set([inst.uses() for inst in s.instructions])
 
 
 def parse_set(line):
@@ -165,22 +172,25 @@ def interp(instruction, environment, title):
 def to_basic_blocks(program):
     leaders = [0]
     bbs = []
+    # find leaders
     for i in range(len(program)):
         if type(program[i]) is lang.Bt:
             leaders.append(i+1)
             leaders.append(program[i].jump_to)
     bb_map = dict()
 
+    # build basic blocks
     for i in range(len(leaders)):
         begin = leaders[i]
         if i == len(leaders)-1:
-            bb = BasicBlock(program[begin:])
+            bb = BasicBlock(program[begin:], i)
         else:
             end = leaders[i+1]
-            bb = BasicBlock(program[begin:end])
+            bb = BasicBlock(program[begin:end], i)
         bb_map[leaders[i]] = bb
         bbs.append(bb)
 
+    # chain basic blocks
     for i in range(len(leaders)-1):
         current_bb = bbs[i]
         last_inst = current_bb.instructions[-1]
@@ -197,22 +207,3 @@ def to_basic_blocks(program):
         bb_map[jump_target_leader].add_previous(current_bb)
 
     return bbs
-
-
-def bb_to_ssa(bb, environment):
-    pass
-
-
-def to_ssa(program, environment):
-    count = dict()
-    stack = dict()
-    for var in environment.definitions():
-        count[var] = 0
-        stack[var] = [0]
-
-    bbs = to_basic_blocks(program)
-    ssa_program = []
-    ssa_environment = lang.Env()
-    for bb in bbs:
-        ssa_bb, ssa_environment = bb_to_ssa(bb, ssa_environment)
-    return (ssa_program, ssa_environment)
