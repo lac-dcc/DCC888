@@ -53,8 +53,16 @@ class DominanceGraph:
     def _insert_phi(var, bb):
         preds = [var for ps in bb.PREVS]
         phi = Phi(var, preds)
-        leader = bb.instructions[0]
         # update instruction chain
+        leader = bb.instructions[0]
+        for prev in leader.PREVS:
+            phi.add_prev(prev)
+            for i in range(len(prev.NEXTS)):
+                if prev.NEXTS[i] == leader:
+                    prev.NEXTS[i] = phi
+                    break
+        phi.add_next(leader)
+        leader.PREVS = [phi]
         bb.instructions = [phi] + bb.instructions
 
     def rename(s):
