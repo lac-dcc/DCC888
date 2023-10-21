@@ -45,6 +45,9 @@ class BasicBlock:
     def uses(s):
         return set([inst.uses() for inst in s.instructions])
 
+    def head(s):
+        return s.instructions[0].index
+
 
 def parse_set(line):
     (s, var, value) = line.split(" ")
