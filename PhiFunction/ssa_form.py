@@ -4,7 +4,7 @@ from typing import List
 
 
 class Phi(lang.Inst):
-    def __init(s, dst, srcs):
+    def __init__(s, dst, srcs):
         s.dst = dst
         s.srcs = srcs
         super().__init__()
@@ -48,7 +48,7 @@ class DominanceGraph:
                         s._insert_phi(var, frontier_node)
                         phi_coverage[n.index].add(var)
 
-    def _insert_phi(var, bb):
+    def _insert_phi(s, var, bb):
         preds = [var for ps in bb.PREVS]
         phi = Phi(var, preds)
         # update instruction chain
