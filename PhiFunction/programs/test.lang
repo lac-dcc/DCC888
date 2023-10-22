@@ -1,0 +1,6 @@
+{"zero": 0, "one": 1, "true": true}
+a = add zero one
+jump = geq a zero
+bt jump 4
+a = add a one
+b = add a one
