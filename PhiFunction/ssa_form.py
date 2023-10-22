@@ -47,8 +47,6 @@ class DominanceGraph:
                     if var not in phi_coverage[n.index]:
                         s._insert_phi(var, frontier_node)
                         phi_coverage[n.index].add(var)
-        # s._update_jumps(bb)
-        pass
 
     def _insert_phi(var, bb):
         preds = [var for ps in bb.PREVS]
@@ -70,15 +68,21 @@ class DominanceGraph:
 
     def program(s):
         last_index = 0
+        # update instruction indices
         for bb in s.bbs:
             for inst in bb.instructions:
                 inst.index = last_index
                 last_index += 1
+        # update branch jump addresses
         for bb in s.bbs:
             last_instruction = bb.instructions[-1]
-            # update instruction chaining
             if type(last_instruction) is not lang.Bt:
                 continue
+            next_leaders = [n.leader() for n in bb.NEXTS]
+            for leader in next_leaders:
+                if leader != last_instruction.index+1:
+                    last_instruction.jump_to = leader
+        # concatenate basic blocks
         prog = []
         for bb in s.bbs:
             prog += bb.instructions
