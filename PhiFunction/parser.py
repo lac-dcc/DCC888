@@ -110,7 +110,10 @@ def chain_instructions(i, lines, program, btList, instruction_table):
 
 def resolve_bts(btList, instruction_table):
     for bt in btList:
-        bt.set_true_dst(instruction_table[bt.jump_to])
+        # bt.set_true_dst(instruction_table[bt.jump_to])
+        dst = instruction_table[bt.jump_to]
+        bt.set_true_dst(dst)
+        dst.add_prev(bt)
 
 
 def pretty_print(program):
