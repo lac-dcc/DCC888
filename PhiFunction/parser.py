@@ -45,7 +45,7 @@ class BasicBlock:
     def uses(s):
         return set([inst.uses() for inst in s.instructions])
 
-    def head(s):
+    def leader(s):
         return s.instructions[0].index
 
 
