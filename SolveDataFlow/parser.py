@@ -63,7 +63,7 @@ def chain_instructions(i, lines, program, btList, instruction_table):
     if is_bt(line):
         (cond, trueIndex) = parse_bt(line)
         inst = lang.Bt(cond)
-        inst.jump_true = trueIndex
+        inst.jump_to = trueIndex
         btList.append(inst)
         # btStack.appendleft((inst, falseIndex))
 
