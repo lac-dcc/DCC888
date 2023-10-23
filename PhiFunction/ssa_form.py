@@ -63,7 +63,7 @@ class DominanceGraph:
         leader.PREVS = [phi]
         bb.instructions = [phi] + bb.instructions
 
-    def rename(s):
+    def rename_variables(s):
         pass
 
     def program(s):
