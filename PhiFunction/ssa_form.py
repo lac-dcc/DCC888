@@ -1,6 +1,6 @@
 import lang
 import parser
-from typing import List
+from typing import List, Set
 
 
 class Phi(lang.Inst):
@@ -16,16 +16,75 @@ class Phi(lang.Inst):
         return set(s.srcs)
 
 
-class DominanceGraph:
+class DJGraph:
     def __init__(s, basic_blocks: List[parser.BasicBlock],
                  env: lang.Env):
         s.bbs = basic_blocks
         s.env = env
+        s.dominance = dict()
+        s.dominators = dict()
+        s.level = dict()
+        s.path = dict()
+        for bb in s.bbs:
+            s.dominance[bb.index] = set()
+            s.dominators[bb.index] = set()
+            s.level[bb.index] = 0
+            s.path[bb.index] = []
+
+    def find_common_ancestor(s, bbs: Set[parser.BasicBlock]) \
+            -> parser.BasicBlock:
+        indexes = [bb.index for bb in bbs]
+        paths = [s.path[i] for i in indexes]
+        print(paths)
+        j = 0
+        min_len = min([len(path) for path in paths])
+        for j in range(min_len):
+            for i in range(1, len(paths)):
+                if paths[i-1][j] != paths[i][j]:
+                    return s.bbs[paths[i][j-1]]
+        return s.bbs[0]
+
+    def compute_dominance_graph(s):
+        # for each child c of current v:
+        # if v is the only parent of c, c dominates v
+        # if v_0, v_1, ... are parents of c, ther earliest common parent
+        # dominates c.
+        parents = [s.bbs[0]]
+        s.path[s.bbs[0].index] = [0]
+        visited = []
+        level = 0
+        while True:
+            for parent in parents:
+                if parent.index in visited:
+                    continue
+                s.level[parent.index] = level
+                visited.append(parent.index)
+                children = parent.NEXTS
+                for child in children:
+                    print(f'child: {child.index}, {child}')
+                    parents = child.PREVS
+                    print(f'{parents}')
+                    s.path[child.index] = \
+                        s.path[parents[0].index] + [child.index]
+                    if len(parents) == 1:
+                        dominator = parent
+                    else:
+                        print(f'found dominator: {dominator.index}')
+                        dominator = s.find_common_ancestor(parents)
+                    s.dominance[dominator.index].add(child.index)
+                    s.dominators[child.index].add(dominator.index)
+            if len(visited) == len(s.bbs):
+                break
+            parents = children
+            level += 1
+
+    def compute_j_edges(s):
+        pass
+
+    def compute_dominance_frontiers(s):
         s.frontier = dict()
         for bb in s.bbs:
             s.frontier[bb.index] = []
-
-    def compute_dominance_frontier(s):
         pass
 
     def insert_phi_functions(s):
@@ -92,8 +151,10 @@ class DominanceGraph:
 def to_ssa(program: List[lang.Inst], env: lang.Env) -> \
         (List[lang.Inst], lang.Env):
     bbs = parser.to_basic_blocks(program)
-    dominance_graph = DominanceGraph(bbs, env)
-    dominance_graph.compute_dominance_frontier()
-    dominance_graph.insert_phi_functions()
-    dominance_graph.rename()
-    return dominance_graph.program(), dominance_graph.env
+    dj_graph = DJGraph(bbs, env)
+    dj_graph.compute_dominance_graph()
+    dj_graph.compute_j_edges()
+    dj_graph.compute_dominance_frontier()
+    dj_graph.insert_phi_functions()
+    dj_graph.rename()
+    return dj_graph.program(), dj_graph.env
