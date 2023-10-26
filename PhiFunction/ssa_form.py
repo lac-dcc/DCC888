@@ -3,7 +3,7 @@ import parser
 from typing import List, Set
 
 
-class Phi(lang.Inst):
+class PhiFunction(lang.Inst):
     def __init__(s, dst, srcs):
         s.dst = dst
         s.srcs = srcs
@@ -105,7 +105,7 @@ class DJGraph:
 
     def _insert_phi(s, var, bb):
         preds = [var for ps in bb.PREVS]
-        phi = Phi(var, preds)
+        phi = PhiFunction(var, preds)
         # update instruction chain
         leader = bb.instructions[0]
         for prev in leader.PREVS:
