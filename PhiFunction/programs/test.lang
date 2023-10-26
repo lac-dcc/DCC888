@@ -1,6 +1,12 @@
-{"zero": 0, "one": 1, "true": true}
+{"zero": 0, "one": 1, "five": 5, "true": true}
 a = add zero one
 jump = geq a zero
-bt jump 4
+bt jump 5
 a = add a one
-b = add a one
+bt true 10
+a = add a one
+jump = geq a five
+bt jump 10
+a = add a one
+bt true 5
+end = add zero zero
