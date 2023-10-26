@@ -21,13 +21,13 @@ class DJGraph:
                  env: lang.Env):
         s.bbs = basic_blocks
         s.env = env
-        s.dominance = dict()
-        s.dominators = dict()
+        s.immediate_dominance = dict()
+        s.immediate_dominators = dict()
         s.level = dict()
         s.path = dict()
         for bb in s.bbs:
-            s.dominance[bb.index] = set()
-            s.dominators[bb.index] = set()
+            s.immediate_dominance[bb.index] = set()
+            s.immediate_dominators[bb.index] = set()
             s.level[bb.index] = 0
             s.path[bb.index] = []
 
@@ -35,7 +35,6 @@ class DJGraph:
             -> parser.BasicBlock:
         indexes = [bb.index for bb in bbs]
         paths = [s.path[i] for i in indexes]
-        print(paths)
         j = 0
         min_len = min([len(path) for path in paths])
         for j in range(min_len):
@@ -61,18 +60,15 @@ class DJGraph:
                 visited.append(parent.index)
                 children = parent.NEXTS
                 for child in children:
-                    print(f'child: {child.index}, {child}')
                     parents = child.PREVS
-                    print(f'{parents}')
                     s.path[child.index] = \
                         s.path[parents[0].index] + [child.index]
                     if len(parents) == 1:
                         dominator = parent
                     else:
-                        print(f'found dominator: {dominator.index}')
                         dominator = s.find_common_ancestor(parents)
-                    s.dominance[dominator.index].add(child.index)
-                    s.dominators[child.index].add(dominator.index)
+                    s.immediate_dominance[dominator.index].add(child.index)
+                    s.immediate_dominators[child.index].add(dominator.index)
             if len(visited) == len(s.bbs):
                 break
             parents = children

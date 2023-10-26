@@ -176,14 +176,16 @@ def interp(instruction, environment, title):
 
 
 def to_basic_blocks(program):
-    leaders = [0]
+    leaders = set([0])
     bbs = []
     # find leaders
     for i in range(len(program)):
         if type(program[i]) is lang.Bt:
-            leaders.append(i+1)
-            leaders.append(program[i].jump_to)
+            leaders.add(i+1)
+            leaders.add(program[i].jump_to)
     bb_map = dict()
+    leaders = list(leaders)
+    leaders.sort()
 
     # build basic blocks
     for i in range(len(leaders)):
