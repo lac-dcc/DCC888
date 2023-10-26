@@ -16,7 +16,7 @@ class PhiFunction(lang.Inst):
         return set(s.srcs)
 
 
-class DJGraph:
+class DominanceGraph:
     def __init__(s, basic_blocks: List[parser.BasicBlock],
                  env: lang.Env):
         s.bbs = basic_blocks
@@ -73,15 +73,6 @@ class DJGraph:
                 break
             parents = children
             level += 1
-
-    def compute_j_edges(s):
-        pass
-
-    def compute_dominance_frontiers(s):
-        s.frontier = dict()
-        for bb in s.bbs:
-            s.frontier[bb.index] = []
-        pass
 
     def insert_phi_functions(s):
         defsites = dict()
@@ -142,15 +133,3 @@ class DJGraph:
         for bb in s.bbs:
             prog += bb.instructions
         return prog
-
-
-def to_ssa(program: List[lang.Inst], env: lang.Env) -> \
-        (List[lang.Inst], lang.Env):
-    bbs = parser.to_basic_blocks(program)
-    dj_graph = DJGraph(bbs, env)
-    dj_graph.compute_dominance_graph()
-    dj_graph.compute_j_edges()
-    dj_graph.compute_dominance_frontier()
-    dj_graph.insert_phi_functions()
-    dj_graph.rename()
-    return dj_graph.program(), dj_graph.env
