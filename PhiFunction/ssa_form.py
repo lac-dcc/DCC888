@@ -43,11 +43,11 @@ class DominanceGraph:
                     return s.bbs[paths[i][j-1]]
         return s.bbs[0]
 
-    def get_immediate_dominance(bb: parser.BasicBlock):
-        pass
+    def get_immediate_dominance(s, block_index: int):
+        return s.immediate_dominance[block_index]
 
-    def get_immediate_dominators(bb: parser.BasicBlock):
-        pass
+    def get_dominators(s, block_index: int):
+        return s.dominators[block_index]
 
     def compute_dominance_graph(s):
         # for each child c of current v:
