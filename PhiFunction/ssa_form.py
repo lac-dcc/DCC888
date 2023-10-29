@@ -51,12 +51,11 @@ class DominanceGraph:
         parents = [s.bbs[0]]
         s.path[s.bbs[0].index] = [0]
         visited = []
-        level = 0
+        s.level[0] = 0
         while True:
             for parent in parents:
                 if parent.index in visited:
                     continue
-                s.level[parent.index] = level
                 visited.append(parent.index)
                 children = parent.NEXTS
                 for child in children:
@@ -67,12 +66,12 @@ class DominanceGraph:
                         dominator = parent
                     else:
                         dominator = s.find_common_ancestor(parents)
+                    s.level[child.index] = s.level[dominator.index]+1
                     s.immediate_dominance[dominator.index].add(child.index)
                     s.immediate_dominators[child.index].add(dominator.index)
             if len(visited) == len(s.bbs):
                 break
             parents = children
-            level += 1
 
     def insert_phi_functions(s):
         defsites = dict()
