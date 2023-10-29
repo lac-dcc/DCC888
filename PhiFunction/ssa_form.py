@@ -22,12 +22,12 @@ class DominanceGraph:
         s.bbs = basic_blocks
         s.env = env
         s.immediate_dominance = dict()
-        s.immediate_dominators = dict()
+        s.dominators = dict()
         s.level = dict()
         s.path = dict()
         for bb in s.bbs:
             s.immediate_dominance[bb.index] = set()
-            s.immediate_dominators[bb.index] = set()
+            s.dominators[bb.index] = []
             s.level[bb.index] = 0
             s.path[bb.index] = []
 
@@ -74,7 +74,8 @@ class DominanceGraph:
                         dominator = s.find_common_ancestor(parents)
                     s.level[child.index] = s.level[dominator.index]+1
                     s.immediate_dominance[dominator.index].add(child.index)
-                    s.immediate_dominators[child.index].add(dominator.index)
+                    s.dominators[child.index] = \
+                        s.dominators[dominator.index] + [dominator.index]
             if len(visited) == len(s.bbs):
                 break
             parents = children
