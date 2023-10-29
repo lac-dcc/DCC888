@@ -5,13 +5,38 @@ import parser
 
 
 class DJGraph(DominanceGraph):
+    def __init__(s, basic_blocks: List[parser.BasicBlock],
+                 env: lang.Env):
+        s.j_edge_in = dict()
+        s.dominance_frontier = dict()
+        super.__init__(s, basic_blocks, env)
+
     def compute_j_edges(s):
+        """
+        Taken from "A Linear Time Algorithm for Placing phi-Nodes":
+
+            An edge x->y in a flowgraph is named a join edge (or J-edge) if
+            x !sdom y. Furthermore, y is named a join node.
+
+        TODO: implement the method for computing J-edges.
+
+        Note that J-edges are represented in the 's.j_edge_in' dictionary.
+        Representing J-edges from the side of the receiver falls in accordance
+        with how J-edges are utilized when computing Dominance Frontiers.
+        """
         pass
 
+    def add_j_edge(s, bb_tail: parser.BasicBlock, bb_head: parser.BasicBlock):
+        if bb_head.index in s.j_edge_in.keys():
+            s.j_edge_in[bb_head.index].append(bb_tail.index)
+        else:
+            s.j_edge_in[bb_head.index] = [bb_tail.index]
+
     def compute_dominance_frontiers(s):
-        s.frontier = dict()
-        for bb in s.bbs:
-            s.frontier[bb.index] = []
+        """
+        TODO: use J-edges to compute the dominance frontier of all nodes in the
+        Dominance Graph.
+        """
         pass
 
 
