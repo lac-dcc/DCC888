@@ -46,8 +46,8 @@ class DominanceGraph:
     def get_immediate_dominance(s, block_index: int):
         return s.immediate_dominance[block_index]
 
-    def get_dominators(s, block_index: int):
-        return s.dominators[block_index]
+    def get_dominator_indexes(s, bb: parser.BasicBlock):
+        return s.dominators[bb.index]
 
     def compute_dominance_graph(s):
         # for each child c of current v:

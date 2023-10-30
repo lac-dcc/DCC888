@@ -24,7 +24,11 @@ class DJGraph(DominanceGraph):
         Representing J-edges from the side of the receiver falls in accordance
         with how J-edges are utilized when computing Dominance Frontiers.
         """
-        pass
+        for bb in s.bbs:
+            nxts = bb.NEXTS
+            for nxt in nxts:
+                if bb.index not in s.get_dominator_indexes(nxt):
+                    s.add_j_edge(bb, nxt)
 
     def add_j_edge(s, bb_tail: parser.BasicBlock, bb_head: parser.BasicBlock):
         if bb_head.index in s.j_edge_in.keys():
