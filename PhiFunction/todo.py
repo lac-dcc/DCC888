@@ -8,6 +8,7 @@ class DJGraph(DominanceGraph):
     def __init__(s, basic_blocks: List[parser.BasicBlock],
                  env: lang.Env):
         s.j_edge_in = dict()
+        s.j_edge_out = dict()
         s.dominance_frontier = dict()
         super().__init__(basic_blocks, env)
 
@@ -33,15 +34,25 @@ class DJGraph(DominanceGraph):
     def add_j_edge(s, bb_tail: parser.BasicBlock, bb_head: parser.BasicBlock):
         if bb_head.index in s.j_edge_in.keys():
             s.j_edge_in[bb_head.index].append(bb_tail.index)
+            s.j_edge_out[bb_tail.index].append(bb_head.index)
         else:
             s.j_edge_in[bb_head.index] = [bb_tail.index]
+            s.j_edge_out[bb_tail.index] = [bb_head.index]
 
     def compute_dominance_frontiers(s):
         """
         TODO: use J-edges to compute the dominance frontier of all nodes in the
         Dominance Graph.
         """
-        pass
+        for bb in s.bbs:
+            s.dominance_frontier[bb.index] = set()
+            subtree = s.dominance_graph(bb.index)
+            for node_index in subtree.keys():
+                if node_index in s.j_edge_out.keys():
+                    target_indices = s.j_edge_in[node_index]
+                    for target_index in target_indices:
+                        if s.level[target_index] <= s.level[bb.index]:
+                            s.dominance_frontier[bb.index].add(target_index)
 
 
 def to_ssa(program: List[lang.Inst], env: lang.Env) -> \

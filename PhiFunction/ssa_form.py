@@ -37,6 +37,17 @@ class DominanceGraph:
             fg[bb.index] = [nxt.index for nxt in bb.NEXTS]
         return fg
 
+    def _dominance_graph(s, root: int, dg: dict) -> dict:
+        children = s.immediate_dominance[root]
+        dg[root] = children
+        for child in children:
+            s._dominance_graph(child, dg)
+
+    def dominance_graph(s, root: int = 0) -> dict:
+        dg = dict()
+        s._dominance_graph(root, dg)
+        return dg
+
     def find_common_ancestor(s, bbs: Set[parser.BasicBlock]) \
             -> parser.BasicBlock:
         indexes = [bb.index for bb in bbs]
