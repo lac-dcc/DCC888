@@ -31,6 +31,12 @@ class DominanceGraph:
             s.level[bb.index] = 0
             s.path[bb.index] = []
 
+    def flow_graph(s):
+        fg = dict()
+        for bb in s.bbs:
+            fg[bb.index] = [nxt.index for nxt in bb.NEXTS]
+        return fg
+
     def find_common_ancestor(s, bbs: Set[parser.BasicBlock]) \
             -> parser.BasicBlock:
         indexes = [bb.index for bb in bbs]
