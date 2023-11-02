@@ -9,7 +9,7 @@ class DJGraph(DominanceGraph):
                  env: lang.Env):
         s.j_edge_in = dict()
         s.dominance_frontier = dict()
-        super.__init__(s, basic_blocks, env)
+        super().__init__(basic_blocks, env)
 
     def compute_j_edges(s):
         """
