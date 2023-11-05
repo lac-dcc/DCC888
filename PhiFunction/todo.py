@@ -7,10 +7,13 @@ import parser
 class DJGraph(DominanceGraph):
     def __init__(s, basic_blocks: List[parser.BasicBlock],
                  env: lang.Env):
+        super().__init__(basic_blocks, env)
         s.j_edge_in = dict()
         s.j_edge_out = dict()
         s.dominance_frontier = dict()
-        super().__init__(basic_blocks, env)
+        for bb in s.bbs:
+            s.j_edge_in[bb.index] = []
+            s.j_edge_out[bb.index] = []
 
     def compute_j_edges(s):
         """
@@ -32,12 +35,8 @@ class DJGraph(DominanceGraph):
                     s.add_j_edge(bb, nxt)
 
     def add_j_edge(s, bb_tail: parser.BasicBlock, bb_head: parser.BasicBlock):
-        if bb_head.index in s.j_edge_in.keys():
-            s.j_edge_in[bb_head.index].append(bb_tail.index)
-            s.j_edge_out[bb_tail.index].append(bb_head.index)
-        else:
-            s.j_edge_in[bb_head.index] = [bb_tail.index]
-            s.j_edge_out[bb_tail.index] = [bb_head.index]
+        s.j_edge_in[bb_head.index].append(bb_tail.index)
+        s.j_edge_out[bb_tail.index].append(bb_head.index)
 
     def compute_dominance_frontiers(s):
         """
