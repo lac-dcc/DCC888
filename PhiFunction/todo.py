@@ -110,5 +110,5 @@ def to_ssa(program: List[lang.Inst], env: lang.Env) -> \
     dj_graph.compute_j_edges()
     dj_graph.compute_dominance_frontier()
     dj_graph.insert_phi_functions()
-    # dj_graph.rename_variables()
+    dj_graph.reindex_program()
     return dj_graph.rename_variables(), dj_graph.env

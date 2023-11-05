@@ -100,9 +100,64 @@ class DominanceGraph:
     def rename_variables(s):
         var_stack = dict()
         var_count = dict()
-        pass
 
-    def program(s):
+        def assert_in_stack(var):
+            if var not in var_stack.keys():
+                var_stack[var] = [0]
+
+        def assert_count(var):
+            if var not in var_count.keys():
+                var_count[var] = 0
+
+        def replace_use(var, inst):
+            top = var_stack[var][-1]
+            if issubclass(type(inst), lang.BinOp):
+                if inst.src0 == var:
+                    inst.src0 = f'{var}_{top}'
+                if inst.src1 == var:
+                    inst.src1 = f'{var}_{top}'
+            else:
+                inst.cond = f'{var}_{top}'
+
+        def replace_phi_use(var, block_index, inst):
+            for i in range(len(inst.srcs)):
+                if type(inst.srcs[i]) is tuple \
+                        and inst.srcs[i][1] == block_index:
+                    inst.srcs[i] = var
+
+        def replace_definition(var, inst):
+            top = var_stack[var][-1]
+            inst.dst = f'{var}_{top}'
+
+        def find_latest(root_var, block_index):
+            bb = s.bbs[block_index]
+            latest = 0
+            for definition in bb.definitions():
+                root, var_index = definition.split('_')
+                if root == root_var and int(var_index) > int(latest):
+                    latest = var_index
+            return f'{root_var}_{latest}'
+
+        for inst in s.prog:
+            if type(inst) is not PhiFunction:
+                for var in inst.uses():
+                    assert_in_stack(var)
+                    replace_use(var, inst)
+            for var in inst.definition():
+                assert_in_stack(var)
+                assert_count(var)
+                var_count[var] += 1
+                i = var_count[var]
+                var_stack[var].append(i)
+                replace_definition(var, inst)
+        for inst in s.prog:
+            if type(inst) is not PhiFunction:
+                continue
+            for (root_var, block_index) in inst.uses():
+                var = find_latest(root_var, block_index)
+                replace_phi_use(var, block_index, inst)
+
+    def reindex_program(s):
         last_index = 0
         # update instruction indices
         for bb in s.bbs:
@@ -122,4 +177,4 @@ class DominanceGraph:
         prog = []
         for bb in s.bbs:
             prog += bb.instructions
-        return prog
+        s.prog = prog

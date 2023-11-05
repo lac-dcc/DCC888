@@ -40,7 +40,12 @@ class BasicBlock:
         s.PREVS.append(prev)
 
     def definitions(s):
-        return set([inst.definition() for inst in s.instructions])
+        instruction_definitions = \
+            [inst.definition() for inst in s.instructions]
+        block_definitions = set()
+        for instruction_definition in instruction_definitions:
+            block_definitions = block_definitions.union(instruction_definition)
+        return block_definitions
 
     def uses(s):
         instruction_uses = [inst.uses() for inst in s.instructions]
