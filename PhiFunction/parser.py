@@ -43,7 +43,11 @@ class BasicBlock:
         return set([inst.definition() for inst in s.instructions])
 
     def uses(s):
-        return set([inst.uses() for inst in s.instructions])
+        instruction_uses = [inst.uses() for inst in s.instructions]
+        block_uses = set()
+        for instruction_use in instruction_uses:
+            block_uses = block_uses.union(instruction_use)
+        return block_uses
 
     def leader(s):
         return s.instructions[0].index
