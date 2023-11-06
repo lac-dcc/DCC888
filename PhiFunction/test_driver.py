@@ -9,7 +9,9 @@ def print_program(program):
     for inst in program:
         print(inst.index, end=': ')
         if type(inst) is PhiFunction:
-            print(f'{inst.dst} = phi({inst.srcs})')
+            srcs = inst.srcs
+            srcs.sort()
+            print(f'{inst.dst} = phi({srcs})')
         else:
             op = parser.rev_match_instruction[type(inst)]
             if op == 'bt':

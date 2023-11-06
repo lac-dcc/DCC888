@@ -48,7 +48,8 @@ class DJGraph(DominanceGraph):
                 phi_nodes_indices.union(set((list(values))))
 
         for phi_node_index in phi_nodes_indices:
-            used_vars = s.bbs[phi_node_index].uses()
+            used_vars = list(s.bbs[phi_node_index].uses())
+            used_vars.sort()
             for used_var in used_vars:
                 s._insert_phi(used_var, s.bbs[phi_node_index])
 
