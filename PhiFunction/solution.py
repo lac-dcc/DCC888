@@ -28,6 +28,11 @@ class DJGraph(DominanceGraph):
         Representing J-edges from the side of the receiver falls in accordance
         with how J-edges are utilized when computing Dominance Frontiers.
         """
+        for bb in s.bbs:
+            nxts = bb.NEXTS
+            for nxt in nxts:
+                if bb.index not in s.get_dominator_indexes(nxt):
+                    s.add_j_edge(bb, nxt)
 
     def add_j_edge(s, bb_tail: parser.BasicBlock, bb_head: parser.BasicBlock):
         s.j_edge_in[bb_head.index].append(bb_tail.index)
@@ -38,6 +43,16 @@ class DJGraph(DominanceGraph):
         TODO: use J-edges to compute the dominance frontier of all nodes in the
         Dominance Graph.
         """
+        # TODO: optimize with piggybank and 'visited' markings
+        for bb in s.bbs:
+            s.dominance_frontier[bb.index] = set()
+            subtree = s.dominance_graph(bb.index)
+            for node_index in subtree.keys():
+                if node_index in s.j_edge_out.keys():
+                    target_indices = s.j_edge_out[node_index]
+                    for target_index in target_indices:
+                        if s.level[target_index] <= s.level[bb.index]:
+                            s.dominance_frontier[bb.index].add(target_index)
 
     def insert_phi_functions(s):
         phi_nodes_indices = set()

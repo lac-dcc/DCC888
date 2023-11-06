@@ -146,10 +146,10 @@ class DominanceGraph:
             for var in inst.definition():
                 assert_in_stack(var)
                 assert_count(var)
-                var_count[var] += 1
                 i = var_count[var]
                 var_stack[var].append(i)
                 replace_definition(var, inst)
+                var_count[var] += 1
         for inst in s.prog:
             if type(inst) is not PhiFunction:
                 continue
