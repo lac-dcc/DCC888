@@ -76,6 +76,7 @@ class DominanceGraph:
         visited = []
         s.level[0] = 0
         while True:
+            next_parents = []
             for parent in parents:
                 if parent.index in visited:
                     continue
@@ -93,9 +94,10 @@ class DominanceGraph:
                     s.immediate_dominance[dominator.index].add(child.index)
                     s.dominators[child.index] = \
                         s.dominators[dominator.index] + [dominator.index]
+                    next_parents.append(child)
             if len(visited) == len(s.bbs):
                 break
-            parents = children
+            parents = next_parents
 
     def rename_variables(s):
         var_stack = dict()
