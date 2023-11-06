@@ -28,6 +28,7 @@ class DJGraph(DominanceGraph):
         Representing J-edges from the side of the receiver falls in accordance
         with how J-edges are utilized when computing Dominance Frontiers.
         """
+        raise NotImplementedError
 
     def add_j_edge(s, bb_tail: parser.BasicBlock, bb_head: parser.BasicBlock):
         s.j_edge_in[bb_head.index].append(bb_tail.index)
@@ -38,6 +39,7 @@ class DJGraph(DominanceGraph):
         TODO: use J-edges to compute the dominance frontier of all nodes in the
         Dominance Graph.
         """
+        raise NotImplementedError
 
     def insert_phi_functions(s):
         phi_nodes_indices = set()

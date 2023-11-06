@@ -58,8 +58,8 @@ class DJGraph(DominanceGraph):
         phi_nodes_indices = set()
         for values in s.dominance_frontier.values():
             if values != set():
-                phi_nodes_indices.union(set((list(values))))
-
+                phi_nodes_indices = \
+                    phi_nodes_indices.union(set((list(values))))
         for phi_node_index in phi_nodes_indices:
             used_vars = s.bbs[phi_node_index].uses()
             for used_var in used_vars:
