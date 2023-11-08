@@ -18,12 +18,16 @@ class DJGraph(DominanceGraph):
         ... ]
         >>> prog, env = parser.build_cfg(program)
         >>> bbs = parser.to_basic_blocks(prog)
-        >>> dg = DominanceGraph(bbs, env)
 
     Basic Blocks (BBs) are indexed according to the order their leaders appear
-    in the program. DominanceGraph always uses the indices to operate on the
+    in the program.
+        >>> [bb.index for bb in bbs]
+        [0, 1, 2]
+
+    DominanceGraph always uses the indices to operate on the
     blocks:
 
+        >>> dg = DominanceGraph(bbs, env)
         >>> dg.flow_graph()
         {0: [1, 2], 1: [2], 2: []}
         >>> dg.compute_dominance_graph()
@@ -39,6 +43,19 @@ class DJGraph(DominanceGraph):
     as parameters:
         >>> dg.dominance_graph(root=1)
         {1: set()}
+
+    DominanceGraph stores information about its structure:
+        >>> dg.get_immediate_domain_indices(index=0)
+        {1, 2}
+        >>> dg.get_dominator_indices(index=1)
+        {0}
+
+    Instead of interacting directly with BasicBlock objects, you may use
+    DominanceGraph:
+        >>> dg.get_NEXTS_indices(index=0)
+        {1, 2}
+        >>> dg.get_PREVS_indices(index=2)
+        {0, 1}
 
     """
     def __init__(s, basic_blocks: List[parser.BasicBlock],
@@ -67,7 +84,7 @@ class DJGraph(DominanceGraph):
         for bb in s.bbs:
             nxts = bb.NEXTS
             for nxt in nxts:
-                if bb.index not in s.get_dominator_indexes(nxt.index):
+                if bb.index not in s.get_dominator_indices(nxt.index):
                     s.add_j_edge(bb, nxt)
 
     def add_j_edge(s, bb_tail: parser.BasicBlock, bb_head: parser.BasicBlock):

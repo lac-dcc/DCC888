@@ -5,6 +5,59 @@ import parser
 
 
 class DJGraph(DominanceGraph):
+    """
+    The DJGraph class extends the DominanceGraph defined in ssa_form.py.
+    The base class operates on Basic Blocks:
+
+        >>> program = [
+        ...     '{"zero": 0, "one": 1, "true": true}',
+        ...     'a = add zero one',
+        ...     'bt true 3',
+        ...     'a = add a one',
+        ...     'a = add a one',
+        ... ]
+        >>> prog, env = parser.build_cfg(program)
+        >>> bbs = parser.to_basic_blocks(prog)
+
+    Basic Blocks (BBs) are indexed according to the order their leaders appear
+    in the program.
+        >>> [bb.index for bb in bbs]
+        [0, 1, 2]
+
+    DominanceGraph always uses the indices to operate on the
+    blocks:
+
+        >>> dg = DominanceGraph(bbs, env)
+        >>> dg.flow_graph()
+        {0: [1, 2], 1: [2], 2: []}
+        >>> dg.compute_dominance_graph()
+        >>> dg.dominance_graph()
+        {0: {1, 2}, 1: set(), 2: set()}
+
+    This means that BB 0 leads to BBs 1 and 2, BB 1 leads
+    to BB 2, and BB 2 is the final block and leads nowhere. Also, BB
+    0 dominates BBs 1 and 2, while BBs 1 and 2 are the leaves of the dominance
+    tree.
+
+    The whole API is based on such indices, and BBs are never passed directly
+    as parameters:
+        >>> dg.dominance_graph(root=1)
+        {1: set()}
+
+    DominanceGraph stores information about its structure:
+        >>> dg.get_immediate_domain_indices(index=0)
+        {1, 2}
+        >>> dg.get_dominator_indices(index=1)
+        {0}
+
+    Instead of interacting directly with BasicBlock objects, you may use
+    DominanceGraph:
+        >>> dg.get_NEXTS_indices(index=0)
+        {1, 2}
+        >>> dg.get_PREVS_indices(index=2)
+        {0, 1}
+
+    """
     def __init__(s, basic_blocks: List[parser.BasicBlock],
                  env: lang.Env):
         super().__init__(basic_blocks, env)

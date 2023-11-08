@@ -21,15 +21,35 @@ class DominanceGraph:
                  env: lang.Env):
         s.bbs = basic_blocks
         s.env = env
-        s.immediate_dominance = dict()
+        s.immediate_domain = dict()
         s.dominators = dict()
         s.level = dict()
         s.path = dict()
+        s.dominance_ok = False
         for bb in s.bbs:
-            s.immediate_dominance[bb.index] = set()
-            s.dominators[bb.index] = []
+            s.immediate_domain[bb.index] = set()
+            s.dominators[bb.index] = set()
             s.level[bb.index] = 0
             s.path[bb.index] = []
+
+    def assert_dominance_ok(s):
+        if not s.dominance_ok:
+            raise Exception("Dominance tree not calculated, "
+                            " run <this>.compute_dominance_graph()")
+
+    def get_immediate_domain_indices(s, index: int) -> Set[int]:
+        s.assert_dominance_ok()
+        return s.immediate_domain[index]
+
+    def get_dominator_indices(s, index: int):
+        s.assert_dominance_ok()
+        return s.dominators[index]
+
+    def get_NEXTS_indices(s, index: int):
+        return set([bb.index for bb in s.bbs[index].NEXTS])
+
+    def get_PREVS_indices(s, index: int):
+        return set([bb.index for bb in s.bbs[index].PREVS])
 
     def flow_graph(s):
         fg = dict()
@@ -38,7 +58,7 @@ class DominanceGraph:
         return fg
 
     def _dominance_graph(s, root: int, dg: dict) -> dict:
-        children = s.immediate_dominance[root]
+        children = s.immediate_domain[root]
         dg[root] = children
         for child in children:
             s._dominance_graph(child, dg)
@@ -58,12 +78,6 @@ class DominanceGraph:
                 if paths[i-1][j] != paths[i][j]:
                     return paths[i][j-1]
         return 0
-
-    def get_immediate_dominance(s, block_index: int):
-        return s.immediate_dominance[block_index]
-
-    def get_dominator_indexes(s, bb_index: int):
-        return s.dominators[bb_index]
 
     def compute_dominance_graph(s):
         # for each child c of current v:
@@ -92,13 +106,13 @@ class DominanceGraph:
                         dominator_index = \
                             s.find_common_ancestor(parent_indices)
                     s.level[child.index] = s.level[dominator_index]+1
-                    s.immediate_dominance[dominator_index].add(child.index)
-                    s.dominators[child.index] = \
-                        s.dominators[dominator_index] + [dominator_index]
+                    s.immediate_domain[dominator_index].add(child.index)
+                    s.dominators[child.index].add(dominator_index)
                     next_parents.append(child)
             if len(visited) == len(s.bbs):
                 break
             parents = next_parents
+        s.dominance_ok = True
 
     def rename_variables(s):
         var_stack = dict()
