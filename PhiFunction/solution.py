@@ -5,6 +5,42 @@ import parser
 
 
 class DJGraph(DominanceGraph):
+    """
+    The DJGraph class extends the DominanceGraph defined in ssa_form.py.
+    The base class operates on Basic Blocks:
+
+        >>> program = [
+        ...     '{"zero": 0, "one": 1, "true": true}',
+        ...     'a = add zero one',
+        ...     'bt true 3',
+        ...     'a = add a one',
+        ...     'a = add a one',
+        ... ]
+        >>> prog, env = parser.build_cfg(program)
+        >>> bbs = parser.to_basic_blocks(prog)
+        >>> dg = DominanceGraph(bbs, env)
+
+    Basic Blocks (BBs) are indexed according to the order their leaders appear
+    in the program. DominanceGraph always uses the indices to operate on the
+    blocks:
+
+        >>> dg.flow_graph()
+        {0: [1, 2], 1: [2], 2: []}
+        >>> dg.compute_dominance_graph()
+        >>> dg.dominance_graph()
+        {0: {1, 2}, 1: set(), 2: set()}
+
+    This means that BB 0 leads to BBs 1 and 2, BB 1 leads
+    to BB 2, and BB 2 is the final block and leads nowhere. Also, BB
+    0 dominates BBs 1 and 2, while BBs 1 and 2 are the leaves of the dominance
+    tree.
+
+    The whole API is based on such indices, and BBs are never passed directly
+    as parameters:
+        >>> dg.dominance_graph(root=1)
+        {1: set()}
+
+    """
     def __init__(s, basic_blocks: List[parser.BasicBlock],
                  env: lang.Env):
         super().__init__(basic_blocks, env)
@@ -31,7 +67,7 @@ class DJGraph(DominanceGraph):
         for bb in s.bbs:
             nxts = bb.NEXTS
             for nxt in nxts:
-                if bb.index not in s.get_dominator_indexes(nxt):
+                if bb.index not in s.get_dominator_indexes(nxt.index):
                     s.add_j_edge(bb, nxt)
 
     def add_j_edge(s, bb_tail: parser.BasicBlock, bb_head: parser.BasicBlock):
