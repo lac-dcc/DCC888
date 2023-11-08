@@ -48,23 +48,22 @@ class DominanceGraph:
         s._dominance_graph(root, dg)
         return dg
 
-    def find_common_ancestor(s, bbs: Set[parser.BasicBlock]) \
-            -> parser.BasicBlock:
-        indexes = [bb.index for bb in bbs]
-        paths = [s.path[i] for i in indexes]
+    def find_common_ancestor(s, bb_indices: Set[int]) \
+            -> int:
+        paths = [s.path[i] for i in bb_indices]
         j = 0
         min_len = min([len(path) for path in paths])
         for j in range(min_len):
             for i in range(1, len(paths)):
                 if paths[i-1][j] != paths[i][j]:
-                    return s.bbs[paths[i][j-1]]
-        return s.bbs[0]
+                    return paths[i][j-1]
+        return 0
 
     def get_immediate_dominance(s, block_index: int):
         return s.immediate_dominance[block_index]
 
-    def get_dominator_indexes(s, bb: parser.BasicBlock):
-        return s.dominators[bb.index]
+    def get_dominator_indexes(s, bb_index: int):
+        return s.dominators[bb_index]
 
     def compute_dominance_graph(s):
         # for each child c of current v:
@@ -87,13 +86,15 @@ class DominanceGraph:
                     s.path[child.index] = \
                         s.path[parents[0].index] + [child.index]
                     if len(parents) == 1:
-                        dominator = parent
+                        dominator_index = parent.index
                     else:
-                        dominator = s.find_common_ancestor(parents)
-                    s.level[child.index] = s.level[dominator.index]+1
-                    s.immediate_dominance[dominator.index].add(child.index)
+                        parent_indices = [bb.index for bb in parents]
+                        dominator_index = \
+                            s.find_common_ancestor(parent_indices)
+                    s.level[child.index] = s.level[dominator_index]+1
+                    s.immediate_dominance[dominator_index].add(child.index)
                     s.dominators[child.index] = \
-                        s.dominators[dominator.index] + [dominator.index]
+                        s.dominators[dominator_index] + [dominator_index]
                     next_parents.append(child)
             if len(visited) == len(s.bbs):
                 break
