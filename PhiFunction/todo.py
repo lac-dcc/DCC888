@@ -107,7 +107,11 @@ class DJGraph(DominanceGraph):
                 s._insert_phi(used_var, s.bbs[phi_node_index])
 
     def _insert_phi(s, var, bb):
-        preds = [(var, ps.index) for ps in bb.PREVS]
+        preds = [(var, ps.index)
+                 for ps in bb.PREVS
+                 if var in ps.definitions()]
+        if len(preds) <= 1:
+            return
         phi = PhiFunction(var, preds)
         # update instruction chain
         leader = bb.instructions[0]

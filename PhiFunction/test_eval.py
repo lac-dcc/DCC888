@@ -9,8 +9,8 @@ def getprog(progname):
     return parser.build_cfg(lines)
 
 
-origprog, origenv = getprog("test")
+origprog, origenv = getprog("big_branch")
 parser.interp(origprog[0], origenv, "solution in original form")
-prog, env = getprog("test")
+prog, env = getprog("big_branch")
 sol, solenv = solution.to_ssa(prog, env)
 parser.interp(sol[0], solenv, "solution in ssa_form")
