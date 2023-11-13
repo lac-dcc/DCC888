@@ -15,6 +15,10 @@ class PhiFunction(lang.Inst):
     def uses(s):
         return set(s.srcs)
 
+    def eval(s, env):
+        first = env.get_first(s.srcs)
+        env.set(s.dst, first)
+
 
 class DominanceGraph:
     def __init__(s, basic_blocks: List[parser.BasicBlock],
@@ -114,6 +118,12 @@ class DominanceGraph:
             parents = next_parents
         s.dominance_ok = True
 
+    def update_env(s):
+        newEnv = lang.Env()
+        for var in s.env.definitions():
+            newEnv.set(var+'_0', s.env.get(var))
+        s.env = newEnv
+
     def rename_variables(s):
         var_stack = dict()
         var_count = dict()
@@ -155,6 +165,7 @@ class DominanceGraph:
                     latest = var_index
             return f'{root_var}_{latest}'
 
+        s.update_env()
         for inst in s.prog:
             if type(inst) is not PhiFunction:
                 for var in inst.uses():
