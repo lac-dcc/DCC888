@@ -4,7 +4,7 @@ pred = lth sub one
 bt pred 10
 prod = add zero one
 count = add zero one
-prod = mul prod 2
+prod = mul prod two
 count = add count one
 repeat = geq three count
 bt repeat 5
