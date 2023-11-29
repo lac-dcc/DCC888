@@ -5,7 +5,7 @@ from static_analysis import ConstraintEnv, Constraint, DependenceGraph
 class Worklist:
     """
     The Worklist is the main data structure used by worklist algorithms.
-    It representes which constraints remain to be solved.
+    It represents which constraints remain to be solved.
 
     There are two fundamental operations regarding this structure:
     insert and extract.
