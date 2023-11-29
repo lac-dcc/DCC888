@@ -89,24 +89,15 @@ def chain_instructions(i, lines, program, btList, instruction_table):
     if i >= len(lines):
         return
     line = lines[i]
-#    if line is "set":
-#        (var, value) = parse_set(line)
-#        env.set(var, value)
     if is_bt(line):
         (cond, trueIndex) = parse_bt(line)
         inst = lang.Bt(cond)
         inst.jump_to = trueIndex
         btList.append(inst)
-        # btStack.appendleft((inst, falseIndex))
 
     else:
         (dst, opcode, src0, src1) = parse_binop(line)
         inst = match_instruction[opcode](dst, src0, src1)
-        # tail may be bt, must deal with this case
-    # if btStack_points_to(btStack, i):
-    #     btStack[0].set_false_dst(inst)
-    #     inst.add_prev(btStack[0])
-    #     btStack.popleft()
     if i > 0:
         tail = program[-1]
         tail.add_next(inst)
@@ -119,7 +110,6 @@ def chain_instructions(i, lines, program, btList, instruction_table):
 
 def resolve_bts(btList, instruction_table):
     for bt in btList:
-        # bt.set_true_dst(instruction_table[bt.jump_to])
         dst = instruction_table[bt.jump_to]
         bt.set_true_dst(dst)
         dst.add_prev(bt)
